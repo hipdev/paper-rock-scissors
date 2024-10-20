@@ -22,8 +22,8 @@ export const getMatches = query({
 export const playGame = mutation({
   args: {
     matchId: v.id('matches'),
-    player1Move: v.union(v.literal('rock'), v.literal('paper'), v.literal('scissors')),
-    player2Move: v.union(v.literal('rock'), v.literal('paper'), v.literal('scissors'))
+    userId: v.id('users'),
+    move: v.union(v.literal('rock'), v.literal('paper'), v.literal('scissors'))
   },
   handler: async (ctx, args) => {
     const match = await ctx.db.get(args.matchId)
@@ -31,12 +31,36 @@ export const playGame = mutation({
       throw new Error('Match not found or already completed')
     }
 
-    const winner = determineWinner(args.player1Move, args.player2Move)
+    const player = await ctx.db
+      .query('players')
+      .filter((q) => q.eq(q.field('userId'), args.userId))
+      .first()
+
+    if (!player) {
+      throw new Error('Player not found')
+    }
+
+    const isPlayer1 = match.player1Id === player._id
+    const isPlayer2 = match.player2Id === player._id
+
+    if (!isPlayer1 && !isPlayer2) {
+      throw new Error('User is not a player in this match')
+    }
+
+    const opponentMove = ['rock', 'paper', 'scissors'][Math.floor(Math.random() * 3)] as
+      | 'rock'
+      | 'paper'
+      | 'scissors'
+
+    const player1Move = isPlayer1 ? args.move : opponentMove
+    const player2Move = isPlayer2 ? args.move : opponentMove
+
+    const winner = determineWinner(player1Move, player2Move)
 
     await ctx.db.insert('games', {
       matchId: args.matchId,
-      player1Move: args.player1Move,
-      player2Move: args.player2Move,
+      player1Move,
+      player2Move,
       winnerId: winner ? (winner === 1 ? match.player1Id : match.player2Id) : undefined
     })
 

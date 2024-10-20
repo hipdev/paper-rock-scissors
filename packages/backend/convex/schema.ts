@@ -17,7 +17,9 @@ const schema = defineSchema({
     name: v.optional(v.string()),
     phone: v.optional(v.string()),
     phoneVerificationTime: v.optional(v.number())
-  }).index('email', ['email']),
+  })
+    .index('email', ['email'])
+    .index('isAdmin', ['isAdmin']),
 
   tournaments: defineTable({
     name: v.string(),

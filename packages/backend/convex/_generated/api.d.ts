@@ -21,7 +21,7 @@ import type * as crons from "../crons.js";
 import type * as http from "../http.js";
 import type * as matches from "../matches.js";
 import type * as notifications from "../notifications.js";
-import type * as tournament from "../tournament.js";
+import type * as tournaments from "../tournaments.js";
 import type * as users from "../users.js";
 
 /**
@@ -39,7 +39,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   matches: typeof matches;
   notifications: typeof notifications;
-  tournament: typeof tournament;
+  tournaments: typeof tournaments;
   users: typeof users;
 }>;
 export declare const api: FilterApi<

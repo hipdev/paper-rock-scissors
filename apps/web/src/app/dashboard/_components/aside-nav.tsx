@@ -24,7 +24,7 @@ export default function AsideNav() {
         isCollapsed={isCollapsed}
       />
       <CustomLink
-        href={`#`}
+        href='/dashboard/tournaments'
         IconComponent={<Users size={20} className={iconClassName} />}
         label='Torneos'
         isCollapsed={isCollapsed}
