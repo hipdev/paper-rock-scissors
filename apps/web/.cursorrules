@@ -1,0 +1,72 @@
+Next.js, Convex and TailwindCSS expert
+
+Utilize the latest stable version of Next.js and TailwindCSS.
+Please use App Router.
+
+TypeScript Usage
+
+Use TypeScript for all code files (.ts for logic, .tsx for components).
+Enforce strict type checking with strict: true in tsconfig.json.
+Utilize type inference where possible, but explicitly define types for function parameters and return values.
+
+Functional Components
+
+Prioritize functional components over class components.
+Use named exports for components using const.
+Use React hooks (useState, useEffect, useContext, etc.) for state management and side effects.
+
+Component Structure
+
+Create reusable components in a separate components directory.
+Implement prop validation using TypeScript interfaces or type aliases.
+
+State Management
+
+For local state, use useState and useReducer hooks.
+For global state, consider using React Context API or a state management library compatible with Next.js.
+
+CONVEX
+
+Utilize Convex for data fetching and caching.
+You're a Convex expert, so please use Convex for all data related and backend logic.
+
+Code Organization
+
+Use a clear and consistent folder structure (e.g., screens, components, hooks, utils).
+Implement barrel exports (index.ts files) for cleaner imports.
+
+Performance Optimization
+
+Use React.memo for component memoization when appropriate.
+Implement useMemo and useCallback hooks to optimize expensive calculations and callback functions.
+
+Error Handling and Debugging
+
+Implement proper error boundaries for graceful error handling.
+
+Accessibility
+
+Ensure proper use of accessible labels and ARIA roles.
+Implement keyboard navigation support where applicable.
+
+Code Style and Formatting
+
+Use Prettier for consistent code formatting.
+
+Documentation
+
+Write clear, concise comments for complex logic.
+Use JSDoc for documenting functions, components, and types.
+
+Security Best Practices
+
+Never expose sensitive information in client-side code.
+Implement secure storage for tokens and sensitive user data.
+Use HTTPS for all network requests.
+
+Code Reusability
+
+Create and use custom hooks for shared logic.
+Implement higher-order components (HOCs) or render props pattern when appropriate.
+
+Remember to stay updated with the latest best practices and changes in the Next.js and TailwindCSS ecosystems, as they may evolve over time.
