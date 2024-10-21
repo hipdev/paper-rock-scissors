@@ -33,13 +33,17 @@ import {
 import { Id } from '@packages/backend/convex/_generated/dataModel'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function TournamentsPage() {
-  const tournaments = useQuery(api.tournaments.getOpenTournaments)
+  const tournaments = useQuery(api.tournaments.getTournaments)
   const createTournament = useMutation(api.tournaments.createTournament)
   const deleteTournament = useMutation(api.tournaments.deleteTournament)
-
+  const joinTournament = useMutation(api.tournaments.joinTournament)
   const user = useQuery(api.users.currentUser)
+
+  const router = useRouter()
+
   console.log(user)
 
   const formRef = useRef<HTMLFormElement>(null)
@@ -73,6 +77,16 @@ export default function TournamentsPage() {
       await deleteTournament({ tournamentId })
       toast.success('Torneo eliminado correctamente')
     } catch (error) {
+      toast.error((error as Error).message)
+    }
+  }
+
+  const handleJoinTournament = async (tournamentId: Id<'tournaments'>) => {
+    try {
+      await joinTournament({ tournamentId })
+      router.push(`/dashboard/${tournamentId}/my-game`)
+    } catch (error) {
+      console.log(error)
       toast.error((error as Error).message)
     }
   }
@@ -143,12 +157,13 @@ export default function TournamentsPage() {
               <TableCell>{new Date(tournament.createdAt).toLocaleString()}</TableCell>
               <TableCell>
                 <div className='flex items-center gap-5'>
-                  <Link
+                  <Button
+                    variant='outline'
                     className='py-1 text-blue-500'
-                    href={`/dashboard/${tournament._id}/my-game`}
+                    onClick={() => handleJoinTournament(tournament._id)}
                   >
                     Jugar
-                  </Link>
+                  </Button>
                   <Link
                     className='py-1 text-blue-500'
                     href={`/dashboard/${tournament._id}/ranking`}

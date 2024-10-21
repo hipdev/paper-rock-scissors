@@ -24,7 +24,7 @@ export default function TournamentPage() {
     <div className='container mx-auto p-4'>
       <h1 className='mb-4 text-2xl font-bold'>{tournament.name}</h1>
       <p className='mb-4'>Status: {tournament.status}</p>
-      <TournamentBracket matches={matches} />
+      <TournamentBracket tournamentId={tournamentId as Id<'tournaments'>} />
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { getAuthUserId } from '@convex-dev/auth/server'
 import { mutation, query } from './_generated/server'
-import { v } from 'convex/values'
+import { ConvexError, v } from 'convex/values'
 
 // Create a new tournament
 export const createTournament = mutation({
@@ -29,6 +29,13 @@ export const getOpenTournaments = query({
   }
 })
 
+// Get all open tournaments
+export const getTournaments = query({
+  handler: async (ctx) => {
+    return await ctx.db.query('tournaments').collect()
+  }
+})
+
 // Start a tournament
 export const startTournament = mutation({
   args: { tournamentId: v.id('tournaments') },
@@ -43,8 +50,14 @@ export const startTournament = mutation({
       .filter((q) => q.eq(q.field('tournamentId'), args.tournamentId))
       .collect()
 
-    if (users.length % 2 !== 0) {
-      throw new Error('Number of users must be even to start the tournament')
+    if (users.length < 2 || users.length % 2 !== 0) {
+      throw new Error('Number of users must be even and at least 2 to start the tournament')
+    }
+
+    // Shuffle users
+    for (let i = users.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[users[i], users[j]] = [users[j], users[i]]
     }
 
     // Generate first round matches
@@ -109,13 +122,28 @@ export const getUserCurrentMatch = query({
 // Join a tournament
 export const joinTournament = mutation({
   args: {
-    tournamentId: v.id('tournaments'),
-    userId: v.id('users')
+    tournamentId: v.id('tournaments')
   },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx)
+    if (!userId) {
+      throw new Error('User not found')
+    }
+
+    // Check if the user is already in the tournament
+    const existingTournamentUser = await ctx.db
+      .query('tournamentUsers')
+      .filter((q) => q.eq(q.field('tournamentId'), args.tournamentId))
+      .filter((q) => q.eq(q.field('userId'), userId))
+      .first()
+
+    if (existingTournamentUser) {
+      throw new ConvexError('User already in tournament')
+    }
+
     await ctx.db.insert('tournamentUsers', {
       tournamentId: args.tournamentId,
-      userId: args.userId,
+      userId: userId,
       score: 0,
       eliminated: false
     })
@@ -152,5 +180,29 @@ export const getTournamentUser = query({
       .filter((q) => q.eq(q.field('tournamentId'), args.tournamentId))
       .filter((q) => q.eq(q.field('userId'), args.userId))
       .first()
+  }
+})
+
+// Get all users for a specific tournament with their full user information
+export const getTournamentUsers = query({
+  args: { tournamentId: v.id('tournaments') },
+  handler: async (ctx, args) => {
+    const tournamentUsers = await ctx.db
+      .query('tournamentUsers')
+      .filter((q) => q.eq(q.field('tournamentId'), args.tournamentId))
+      .collect()
+
+    // Perform a "join" to get the full user information
+    const usersWithInfo = await Promise.all(
+      tournamentUsers.map(async (tournamentUser) => {
+        const user = await ctx.db.get(tournamentUser.userId)
+        return {
+          ...tournamentUser,
+          userInfo: user
+        }
+      })
+    )
+
+    return usersWithInfo
   }
 })

@@ -23,6 +23,8 @@ export default function TournamentPage() {
     userId
   })
 
+  console.log(currentMatch, 'currentMatch')
+
   const joinTournament = useMutation(api.tournaments.joinTournament)
   const playGame = useMutation(api.matches.playGame)
 
@@ -30,10 +32,6 @@ export default function TournamentPage() {
 
   if (!isAuthenticated || !tournament || userStatus === undefined || !user) {
     return <div>Loading...</div>
-  }
-
-  const handleJoin = async () => {
-    await joinTournament({ tournamentId, userId })
   }
 
   const handleMove = async (move: 'rock' | 'paper' | 'scissors') => {
@@ -51,12 +49,6 @@ export default function TournamentPage() {
     <div className='container mx-auto p-4'>
       <h1 className='mb-4 text-2xl font-bold'>{tournament.name}</h1>
       <p>Status: {tournament.status}</p>
-
-      {userStatus === 'not_joined' && tournament.status === 'open' && (
-        <button onClick={handleJoin} className='rounded bg-blue-500 px-4 py-2 text-white'>
-          Join Tournament
-        </button>
-      )}
 
       {userStatus === 'joined' && tournament.status === 'open' && (
         <p>Waiting for the tournament to start...</p>

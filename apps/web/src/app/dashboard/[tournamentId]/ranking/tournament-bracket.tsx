@@ -1,89 +1,48 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { Id } from '@packages/backend/convex/_generated/dataModel'
-import { useQuery } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
 import { api } from '@packages/backend/convex/_generated/api'
 
-interface Match {
-  _id: Id<'matches'>
-  player1Id: Id<'users'>
-  player2Id: Id<'users'>
-  player1Score: number
-  player2Score: number
-  round: number
-  status: 'pending' | 'in_progress' | 'completed'
-  winnerId?: Id<'users'>
-}
-
 interface Props {
-  matches: Match[]
+  tournamentId: Id<'tournaments'>
 }
 
-export const TournamentBracket: React.FC<Props> = ({ matches }) => {
-  const rounds = useMemo(() => organizeMatchesByRound(matches), [matches])
+export const TournamentBracket: React.FC<Props> = ({ tournamentId }) => {
+  const tournamentUsers = useQuery(api.tournaments.getTournamentUsers, { tournamentId })
+  const tournament = useQuery(api.tournaments.getTournament, { tournamentId })
+  const startTournament = useMutation(api.tournaments.startTournament)
 
-  console.log(rounds, 'current rounds')
-
-  return (
-    <div className='flex flex-nowrap overflow-x-auto'>
-      {rounds.map((round, roundIndex) => (
-        <div key={roundIndex} className='mx-4 flex flex-col items-center'>
-          <div className='flex h-full flex-col justify-center space-y-4'>
-            <h2 className='mb-2 text-center text-lg font-semibold'>
-              {roundIndex === rounds.length - 1 ? 'Final' : `Round ${roundIndex + 1}`}
-            </h2>
-            {round.map((match) => (
-              <div key={match._id} className='w-64 rounded-lg bg-gray-800 p-4'>
-                <div className='flex flex-col space-y-2'>
-                  <UserSlot
-                    userId={match.player1Id}
-                    score={match.player1Score}
-                    isWinner={match.winnerId === match.player1Id}
-                  />
-                  <UserSlot
-                    userId={match.player2Id}
-                    score={match.player2Score}
-                    isWinner={match.winnerId === match.player2Id}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-const UserSlot: React.FC<{ userId: Id<'users'>; score: number; isWinner: boolean }> = ({
-  userId,
-  score,
-  isWinner
-}) => {
-  const user = useQuery(api.users.getUserById, { userId })
-
-  if (!user) {
-    return <div className='h-8 rounded bg-gray-700'></div>
+  if (!tournamentUsers || !tournament) {
+    return <div>Loading...</div>
   }
 
-  return (
-    <div
-      className={`flex items-center justify-between rounded p-2 ${isWinner ? 'bg-green-700' : 'bg-gray-700'}`}
-    >
-      <span className='truncate'>{user.name}</span>
-      <span className='font-semibold'>{score}</span>
-    </div>
-  )
-}
+  const handleStartTournament = async () => {
+    await startTournament({ tournamentId })
+  }
 
-function organizeMatchesByRound(matches: Match[]): Match[][] {
-  const roundsMap = new Map<number, Match[]>()
+  if (tournament.status === 'open') {
+    return (
+      <div className='p-4'>
+        <h2 className='mb-4 text-2xl font-bold'>Waiting Players</h2>
+        <ul className='space-y-2'>
+          {tournamentUsers.map((user) => (
+            <li key={user._id} className='rounded bg-gray-800 p-2'>
+              {user.userInfo?.name || user.userInfo?.email}
+            </li>
+          ))}
+        </ul>
+        {tournamentUsers.length >= 2 && tournamentUsers.length % 2 === 0 && (
+          <button
+            onClick={handleStartTournament}
+            className='mt-4 rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700'
+          >
+            Start Tournament
+          </button>
+        )}
+      </div>
+    )
+  }
 
-  matches.forEach((match) => {
-    if (!roundsMap.has(match.round)) {
-      roundsMap.set(match.round, [])
-    }
-    roundsMap.get(match.round)!.push(match)
-  })
-
-  return Array.from(roundsMap.values())
+  // If the tournament has started, show the brackets (you can implement this part later)
+  return <div>Tournament has started. Bracket view to be implemented.</div>
 }
