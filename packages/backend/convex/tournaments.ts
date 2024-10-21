@@ -108,7 +108,7 @@ export const getUserTournamentStatus = query({
 export const getUserCurrentMatch = query({
   args: { tournamentId: v.id('tournaments'), userId: v.id('users') },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const match = await ctx.db
       .query('matches')
       .filter((q) => q.eq(q.field('tournamentId'), args.tournamentId))
       .filter((q) =>
@@ -116,6 +116,23 @@ export const getUserCurrentMatch = query({
       )
       .filter((q) => q.neq(q.field('status'), 'completed'))
       .first()
+
+    if (!match) return null
+
+    const currentGame = await ctx.db
+      .query('games')
+      .withIndex('by_match', (q) => q.eq('matchId', match._id))
+      .order('desc')
+      .first()
+
+    return {
+      ...match,
+      currentGame,
+      isYourTurn: currentGame
+        ? (match.player1Id === args.userId && !currentGame.player1Move) ||
+          (match.player2Id === args.userId && !currentGame.player2Move)
+        : match.player1Id === args.userId
+    }
   }
 })
 

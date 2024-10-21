@@ -37,65 +37,12 @@ export const playGame = mutation({
   },
   handler: async (ctx, args) => {
     const match = await ctx.db.get(args.matchId)
-    if (!match || match.status === 'completed') {
-      throw new Error('Match not found or already completed')
+    if (!match) {
+      throw new Error('Match not found')
     }
 
-    const isPlayer1 = match.player1Id === args.userId
-    const isPlayer2 = match.player2Id === args.userId
-
-    if (!isPlayer1 && !isPlayer2) {
-      throw new Error('User is not a player in this match')
-    }
-
-    const opponentMove = ['rock', 'paper', 'scissors'][Math.floor(Math.random() * 3)] as
-      | 'rock'
-      | 'paper'
-      | 'scissors'
-
-    const player1Move = isPlayer1 ? args.move : opponentMove
-    const player2Move = isPlayer2 ? args.move : opponentMove
-
-    const winner = determineWinner(player1Move, player2Move)
-
-    await ctx.db.insert('games', {
-      matchId: args.matchId,
-      player1Move,
-      player2Move,
-      winnerId: winner ? (winner === 1 ? match.player1Id : match.player2Id) : undefined
-    })
-
-    if (winner) {
-      if (winner === 1) {
-        match.player1Score++
-      } else {
-        match.player2Score++
-      }
-    }
-
-    const tournament = await ctx.db.get(match.tournamentId)
-
-    if (!tournament) {
-      throw new Error('Tournament not found')
-    }
-
-    const maxScore = match.isFinal ? 2 : tournament.gameType === 'single_elimination' ? 1 : 2
-
-    if (match.player1Score >= maxScore || match.player2Score >= maxScore) {
-      await ctx.db.patch(args.matchId, {
-        player1Score: match.player1Score,
-        player2Score: match.player2Score,
-        status: 'completed',
-        winnerId: match.player1Score > match.player2Score ? match.player1Id : match.player2Id
-      })
-
-      await advanceTournament(ctx, match.tournamentId, match.round)
-    } else {
-      await ctx.db.patch(args.matchId, {
-        player1Score: match.player1Score,
-        player2Score: match.player2Score,
-        status: 'in_progress'
-      })
+    if (match.status === 'completed') {
+      throw new Error('Match is already completed')
     }
   }
 })

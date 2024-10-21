@@ -35,6 +35,8 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+type TournamentStatus = 'open' | 'in_progress' | 'completed'
+
 export default function TournamentsPage() {
   const tournaments = useQuery(api.tournaments.getTournaments)
   const createTournament = useMutation(api.tournaments.createTournament)
@@ -81,7 +83,18 @@ export default function TournamentsPage() {
     }
   }
 
-  const handleJoinTournament = async (tournamentId: Id<'tournaments'>) => {
+  const handleJoinTournament = async ({
+    tournamentId,
+    status
+  }: {
+    tournamentId: Id<'tournaments'>
+    status: TournamentStatus
+  }) => {
+    if (status === 'in_progress') {
+      router.push(`/dashboard/${tournamentId}/my-game`)
+      return
+    }
+
     try {
       await joinTournament({ tournamentId })
       router.push(`/dashboard/${tournamentId}/my-game`)
@@ -160,7 +173,12 @@ export default function TournamentsPage() {
                   <Button
                     variant='outline'
                     className='py-1 text-blue-500'
-                    onClick={() => handleJoinTournament(tournament._id)}
+                    onClick={() =>
+                      handleJoinTournament({
+                        tournamentId: tournament._id,
+                        status: tournament.status
+                      })
+                    }
                   >
                     Jugar
                   </Button>

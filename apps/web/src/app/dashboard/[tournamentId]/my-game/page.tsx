@@ -80,6 +80,22 @@ export default function TournamentPage() {
             </div>
           )}
 
+          {currentMatch && (
+            <div>
+              <h2>Current Match</h2>
+              {currentMatch.isYourTurn ? (
+                <div>
+                  <p>It's your turn! Make your move:</p>
+                  <button onClick={() => handleMove('rock')}>Rock</button>
+                  <button onClick={() => handleMove('paper')}>Paper</button>
+                  <button onClick={() => handleMove('scissors')}>Scissors</button>
+                </div>
+              ) : (
+                <p>Waiting for your opponent to make a move...</p>
+              )}
+            </div>
+          )}
+
           {currentMatch.status === 'in_progress' && userMove && (
             <p className='mt-4'>You played {userMove}. Waiting for opponent...</p>
           )}
