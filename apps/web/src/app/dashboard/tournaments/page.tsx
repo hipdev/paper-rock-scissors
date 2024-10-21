@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/select'
 import { Id } from '@packages/backend/convex/_generated/dataModel'
 import { toast } from 'sonner'
+import Link from 'next/link'
 
 export default function TournamentsPage() {
   const tournaments = useQuery(api.tournaments.getOpenTournaments)
@@ -120,7 +121,6 @@ export default function TournamentsPage() {
         </Dialog>
       </div>
       <Table>
-        <TableCaption>Una lista de torneos abiertos.</TableCaption>
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
@@ -132,7 +132,7 @@ export default function TournamentsPage() {
         </TableHeader>
         <TableBody>
           {tournaments?.map((tournament) => (
-            <TableRow key={tournament._id}>
+            <TableRow key={tournament._id} className='hover:bg-neutral-900'>
               <TableCell>{tournament.name}</TableCell>
               <TableCell>
                 {tournament.gameType === 'single_elimination'
@@ -142,10 +142,19 @@ export default function TournamentsPage() {
               <TableCell>{gameStatus[tournament.status]}</TableCell>
               <TableCell>{new Date(tournament.createdAt).toLocaleString()}</TableCell>
               <TableCell>
-                <div className='flex gap-3'>
-                  <Button variant='outline' size='sm'>
+                <div className='flex items-center gap-5'>
+                  <Link
+                    className='py-1 text-blue-500'
+                    href={`/dashboard/${tournament._id}/my-game`}
+                  >
                     Jugar
-                  </Button>
+                  </Link>
+                  <Link
+                    className='py-1 text-blue-500'
+                    href={`/dashboard/${tournament._id}/ranking`}
+                  >
+                    Ver
+                  </Link>
 
                   <Button
                     variant='destructive'

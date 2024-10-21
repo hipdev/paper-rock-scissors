@@ -21,6 +21,16 @@ export const getUsers = query({
   }
 })
 
+export const getUserById = query({
+  args: { userId: v.id('users') },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query('users')
+      .filter((q) => q.eq(q.field('_id'), args.userId))
+      .first()
+  }
+})
+
 export const updateUserName = mutation({
   args: {
     name: v.string(),
@@ -52,5 +62,12 @@ export const updateUser = mutation({
     if (args.lastName !== undefined) updates.lastName = args.lastName
 
     return await ctx.db.patch(userId, updates)
+  }
+})
+
+export const getUser = query({
+  args: { userId: v.id('users') },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.userId)
   }
 })

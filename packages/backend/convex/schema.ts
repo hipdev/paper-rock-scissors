@@ -4,7 +4,7 @@ import { defineSchema, defineTable } from 'convex/server'
 
 const schema = defineSchema({
   ...authTables,
-  // Tabla para almacenar información de los usuarios
+  // Users table (updated)
   users: defineTable({
     email: v.optional(v.string()),
     emailVerificationTime: v.optional(v.number()),
@@ -14,7 +14,7 @@ const schema = defineSchema({
     isAuthorized: v.optional(v.boolean()),
     isSuperAdmin: v.optional(v.boolean()),
     lastName: v.optional(v.string()),
-    name: v.optional(v.string()),
+    name: v.optional(v.string()), // Changed from optional to required
     phone: v.optional(v.string()),
     phoneVerificationTime: v.optional(v.number())
   })
@@ -30,14 +30,9 @@ const schema = defineSchema({
     completedAt: v.optional(v.number())
   }).index('by_status', ['status']),
 
-  players: defineTable({
-    name: v.string(),
-    userId: v.string()
-  }).index('by_userId', ['userId']),
-
-  tournamentPlayers: defineTable({
+  tournamentUsers: defineTable({
     tournamentId: v.id('tournaments'),
-    playerId: v.id('players'),
+    userId: v.id('users'), // Changed from playerId to userId
     score: v.number(),
     eliminated: v.boolean()
   }).index('by_tournament', ['tournamentId']),
@@ -45,11 +40,11 @@ const schema = defineSchema({
   matches: defineTable({
     tournamentId: v.id('tournaments'),
     round: v.number(),
-    player1Id: v.id('players'),
-    player2Id: v.id('players'),
+    player1Id: v.id('users'), // Changed from players to users
+    player2Id: v.id('users'), // Changed from players to users
     player1Score: v.number(),
     player2Score: v.number(),
-    winnerId: v.optional(v.id('players')),
+    winnerId: v.optional(v.id('users')), // Changed from players to users
     status: v.union(v.literal('pending'), v.literal('in_progress'), v.literal('completed')),
     isFinal: v.boolean()
   }).index('by_tournament_and_round', ['tournamentId', 'round']),
@@ -58,7 +53,7 @@ const schema = defineSchema({
     matchId: v.id('matches'),
     player1Move: v.optional(v.union(v.literal('rock'), v.literal('paper'), v.literal('scissors'))),
     player2Move: v.optional(v.union(v.literal('rock'), v.literal('paper'), v.literal('scissors'))),
-    winnerId: v.optional(v.id('players'))
+    winnerId: v.optional(v.id('users')) // Changed from players to users
   }).index('by_match', ['matchId'])
 })
 

@@ -18,6 +18,16 @@ export const getMatches = query({
   }
 })
 
+export const getMatchesForTournament = query({
+  args: { tournamentId: v.id('tournaments') },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query('matches')
+      .filter((q) => q.eq(q.field('tournamentId'), args.tournamentId))
+      .collect()
+  }
+})
+
 // Play a game in a match
 export const playGame = mutation({
   args: {
@@ -31,17 +41,8 @@ export const playGame = mutation({
       throw new Error('Match not found or already completed')
     }
 
-    const player = await ctx.db
-      .query('players')
-      .filter((q) => q.eq(q.field('userId'), args.userId))
-      .first()
-
-    if (!player) {
-      throw new Error('Player not found')
-    }
-
-    const isPlayer1 = match.player1Id === player._id
-    const isPlayer2 = match.player2Id === player._id
+    const isPlayer1 = match.player1Id === args.userId
+    const isPlayer2 = match.player2Id === args.userId
 
     if (!isPlayer1 && !isPlayer2) {
       throw new Error('User is not a player in this match')

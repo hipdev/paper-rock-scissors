@@ -38,26 +38,26 @@ export const startTournament = mutation({
       throw new Error('Tournament not found or not open')
     }
 
-    const players = await ctx.db
-      .query('tournamentPlayers')
+    const users = await ctx.db
+      .query('tournamentUsers')
       .filter((q) => q.eq(q.field('tournamentId'), args.tournamentId))
       .collect()
 
-    if (players.length % 2 !== 0) {
-      throw new Error('Number of players must be even to start the tournament')
+    if (users.length % 2 !== 0) {
+      throw new Error('Number of users must be even to start the tournament')
     }
 
     // Generate first round matches
-    for (let i = 0; i < players.length; i += 2) {
+    for (let i = 0; i < users.length; i += 2) {
       await ctx.db.insert('matches', {
         tournamentId: args.tournamentId,
         round: 1,
-        player1Id: players[i].playerId,
-        player2Id: players[i + 1].playerId,
+        player1Id: users[i].userId,
+        player2Id: users[i + 1].userId,
         player1Score: 0,
         player2Score: 0,
         status: 'pending',
-        isFinal: players.length === 2 // If only 2 players, it's the final match
+        isFinal: users.length === 2 // If only 2 users, it's the final match
       })
     }
 
@@ -81,20 +81,13 @@ export const getTournament = query({
 export const getUserTournamentStatus = query({
   args: { tournamentId: v.id('tournaments'), userId: v.id('users') },
   handler: async (ctx, args) => {
-    const player = await ctx.db
-      .query('players')
+    const tournamentUser = await ctx.db
+      .query('tournamentUsers')
+      .filter((q) => q.eq(q.field('tournamentId'), args.tournamentId))
       .filter((q) => q.eq(q.field('userId'), args.userId))
       .first()
 
-    if (!player) return 'not_registered'
-
-    const tournamentPlayer = await ctx.db
-      .query('tournamentPlayers')
-      .filter((q) => q.eq(q.field('tournamentId'), args.tournamentId))
-      .filter((q) => q.eq(q.field('playerId'), player._id))
-      .first()
-
-    return tournamentPlayer ? 'joined' : 'not_joined'
+    return tournamentUser ? 'joined' : 'not_joined'
   }
 })
 
@@ -102,18 +95,11 @@ export const getUserTournamentStatus = query({
 export const getUserCurrentMatch = query({
   args: { tournamentId: v.id('tournaments'), userId: v.id('users') },
   handler: async (ctx, args) => {
-    const player = await ctx.db
-      .query('players')
-      .filter((q) => q.eq(q.field('userId'), args.userId))
-      .first()
-
-    if (!player) return null
-
     return await ctx.db
       .query('matches')
       .filter((q) => q.eq(q.field('tournamentId'), args.tournamentId))
       .filter((q) =>
-        q.or(q.eq(q.field('player1Id'), player._id), q.eq(q.field('player2Id'), player._id))
+        q.or(q.eq(q.field('player1Id'), args.userId), q.eq(q.field('player2Id'), args.userId))
       )
       .filter((q) => q.neq(q.field('status'), 'completed'))
       .first()
@@ -127,18 +113,9 @@ export const joinTournament = mutation({
     userId: v.id('users')
   },
   handler: async (ctx, args) => {
-    const player = await ctx.db
-      .query('players')
-      .filter((q) => q.eq(q.field('userId'), args.userId))
-      .first()
-
-    if (!player) {
-      throw new Error('Player not found')
-    }
-
-    await ctx.db.insert('tournamentPlayers', {
+    await ctx.db.insert('tournamentUsers', {
       tournamentId: args.tournamentId,
-      playerId: player._id,
+      userId: args.userId,
       score: 0,
       eliminated: false
     })
@@ -164,5 +141,16 @@ export const deleteTournament = mutation({
       throw new Error('User is not an admin')
     }
     await ctx.db.delete(args.tournamentId)
+  }
+})
+
+export const getTournamentUser = query({
+  args: { tournamentId: v.id('tournaments'), userId: v.id('users') },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query('tournamentUsers')
+      .filter((q) => q.eq(q.field('tournamentId'), args.tournamentId))
+      .filter((q) => q.eq(q.field('userId'), args.userId))
+      .first()
   }
 })
