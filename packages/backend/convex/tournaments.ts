@@ -343,8 +343,8 @@ export const playGame = mutation({
     // Si ambos jugadores han hecho su movimiento, determinar el ganador
     if (currentGame.player1Move && currentGame.player2Move) {
       console.log('both moves', currentGame.player1Move, currentGame.player2Move)
-      // const gameWinner = determineWinner(currentGame.player1Move, currentGame.player2Move)
-      // console.log('game winner', gameWinner)
+      const gameWinner = determineWinner(currentGame.player1Move, currentGame.player2Move)
+      console.log('game winner', gameWinner)
       // await ctx.db.patch(currentGame._id, {
       //   winnerId: gameWinner === 'tie' ? undefined : match[`${gameWinner}Id`]
       // })
