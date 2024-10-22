@@ -46,8 +46,6 @@ export default function TournamentsPage() {
 
   const router = useRouter()
 
-  console.log(user)
-
   const formRef = useRef<HTMLFormElement>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
@@ -55,7 +53,7 @@ export default function TournamentsPage() {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
     const name = formData.get('name') as string
-    const gameType = formData.get('gameType') as 'single_elimination' | 'best_of_two'
+    const gameType = formData.get('gameType') as 'best_of_one' | 'best_of_two'
 
     try {
       await createTournament({ name, gameType })
@@ -99,7 +97,6 @@ export default function TournamentsPage() {
       await joinTournament({ tournamentId })
       router.push(`/dashboard/${tournamentId}/my-game`)
     } catch (error) {
-      console.log(error)
       toast.error((error as Error).message)
     }
   }
@@ -129,12 +126,12 @@ export default function TournamentsPage() {
                   <Label htmlFor='gameType' className='text-right'>
                     Tipo
                   </Label>
-                  <Select name='gameType' defaultValue='single_elimination'>
+                  <Select name='gameType' defaultValue='best_of_one'>
                     <SelectTrigger className='col-span-3'>
                       <SelectValue placeholder='Selecciona un tipo de torneo' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value='single_elimination'>Eliminación directa</SelectItem>
+                      <SelectItem value='best_of_one'>Mejor de uno</SelectItem>
                       <SelectItem value='best_of_two'>Mejor de dos</SelectItem>
                     </SelectContent>
                   </Select>
@@ -162,9 +159,7 @@ export default function TournamentsPage() {
             <TableRow key={tournament._id} className='hover:bg-neutral-900'>
               <TableCell>{tournament.name}</TableCell>
               <TableCell>
-                {tournament.gameType === 'single_elimination'
-                  ? 'Eliminación directa'
-                  : 'Mejor de dos'}
+                {tournament.gameType === 'best_of_one' ? 'Eliminación directa' : 'Mejor de dos'}
               </TableCell>
               <TableCell>{gameStatus[tournament.status]}</TableCell>
               <TableCell>{new Date(tournament.createdAt).toLocaleString()}</TableCell>

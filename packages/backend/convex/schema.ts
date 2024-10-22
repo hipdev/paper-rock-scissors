@@ -28,9 +28,9 @@ const schema = defineSchema({
     createdAt: v.number(),
     startedAt: v.optional(v.number()),
     completedAt: v.optional(v.number()),
-    playerCount: v.number(), // Changed from minPlayers/maxPlayers to playerCount
-    currentRound: v.number(),
-    totalRounds: v.number()
+    playerCount: v.number(), // Número actual de jugadores inscritos
+    currentRound: v.optional(v.number()),
+    totalRounds: v.optional(v.number())
   }).index('by_status', ['status']),
 
   tournamentUsers: defineTable({
@@ -43,6 +43,7 @@ const schema = defineSchema({
   })
     .index('by_tournament', ['tournamentId'])
     .index('by_user', ['userId'])
+    .index('by_tournament_and_user', ['tournamentId', 'userId'])
     .index('by_tournament_and_seed', ['tournamentId', 'seed']),
 
   matches: defineTable({
@@ -56,7 +57,8 @@ const schema = defineSchema({
     winnerId: v.optional(v.id('users')),
     status: v.union(v.literal('pending'), v.literal('in_progress'), v.literal('completed')),
     isFinal: v.boolean(),
-    nextMatchId: v.optional(v.id('matches'))
+    nextMatchId: v.optional(v.id('matches')),
+    currentGameNumber: v.optional(v.number())
   })
     .index('by_tournament_and_round', ['tournamentId', 'round'])
     .index('by_players', ['player1Id', 'player2Id'])
@@ -66,7 +68,8 @@ const schema = defineSchema({
     matchId: v.id('matches'),
     player1Move: v.optional(v.union(v.literal('rock'), v.literal('paper'), v.literal('scissors'))),
     player2Move: v.optional(v.union(v.literal('rock'), v.literal('paper'), v.literal('scissors'))),
-    winnerId: v.optional(v.id('users')) // Changed from players to users
+    winnerId: v.optional(v.id('users')), // Changed from players to users
+    createdAt: v.number()
   }).index('by_match', ['matchId'])
 })
 

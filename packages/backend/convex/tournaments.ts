@@ -1,33 +1,58 @@
 import { v } from 'convex/values'
-import { DatabaseReader, DatabaseWriter, mutation, query } from './_generated/server'
-import { Id } from './_generated/dataModel'
+import { mutation, query } from './_generated/server'
+
 import { getAuthUserId } from '@convex-dev/auth/server'
+import {
+  createNextRoundMatches,
+  determineWinner,
+  handleMatchCompletion,
+  updateMatchScore
+} from './lib/utils'
 
 // Crear un nuevo torneo
 export const createTournament = mutation({
   args: {
     name: v.string(),
-    gameType: v.union(v.literal('best_of_one'), v.literal('best_of_two')),
-    playerCount: v.number()
+    gameType: v.union(v.literal('best_of_one'), v.literal('best_of_two'))
   },
   handler: async (ctx, args) => {
-    const { name, gameType, playerCount } = args
-
-    if (playerCount % 2 !== 0 || playerCount < 2) {
-      throw new Error('El número de jugadores debe ser par y al menos 2')
-    }
+    const { name, gameType } = args
 
     const tournamentId = await ctx.db.insert('tournaments', {
       name,
       gameType,
-      playerCount,
+      playerCount: 0,
       status: 'open',
       createdAt: Date.now(),
       currentRound: 0,
-      totalRounds: Math.log2(playerCount)
+      totalRounds: 0
     })
 
     return tournamentId
+  }
+})
+
+// Obtener los torneos
+export const getTournaments = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query('tournaments').collect()
+  }
+})
+
+// Eliminar un torneo
+export const deleteTournament = mutation({
+  args: { tournamentId: v.id('tournaments') },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx)
+    if (!userId) throw new Error('Usuario no autenticado')
+
+    const user = await ctx.db.get(userId)
+
+    if (!user?.isAdmin) throw new Error('No tienes permisos para eliminar torneos')
+
+    const { tournamentId } = args
+    await ctx.db.delete(tournamentId)
   }
 })
 
@@ -46,14 +71,14 @@ export const joinTournament = mutation({
       throw new Error('No se puede unir a un torneo que ya ha comenzado o terminado')
     }
 
-    const participantCount = await ctx.db
+    // check if user is already in the tournament
+    const userTournament = await ctx.db
       .query('tournamentUsers')
-      .withIndex('by_tournament', (q) => q.eq('tournamentId', tournamentId))
-      .collect()
-
-    if (participantCount.length >= tournament.playerCount) {
-      throw new Error('El torneo está lleno')
-    }
+      .withIndex('by_tournament_and_user', (q) =>
+        q.eq('tournamentId', tournamentId).eq('userId', userId)
+      )
+      .first()
+    if (userTournament) return
 
     await ctx.db.insert('tournamentUsers', {
       tournamentId,
@@ -62,6 +87,11 @@ export const joinTournament = mutation({
       eliminated: false,
       joinedAt: Date.now(),
       seed: Math.random() // Asignar un seed aleatorio
+    })
+
+    // Actualizar el número de jugadores actuales
+    await ctx.db.patch(tournamentId, {
+      playerCount: tournament.playerCount + 1
     })
   }
 })
@@ -169,46 +199,6 @@ export const completeMatch = mutation({
   }
 })
 
-// Función auxiliar para crear partidos de la siguiente ronda
-async function createNextRoundMatches(
-  ctx: {
-    db: DatabaseReader & DatabaseWriter
-  },
-  tournamentId: Id<'tournaments'>,
-  currentRound: number
-) {
-  const completedMatches = await ctx.db
-    .query('matches')
-    .withIndex('by_tournament_and_round', (q) =>
-      q.eq('tournamentId', tournamentId).eq('round', currentRound)
-    )
-    .collect()
-
-  const nextRound = currentRound + 1
-  const isFinal = completedMatches.length === 2
-
-  for (let i = 0; i < completedMatches.length; i += 2) {
-    const newMatchId = await ctx.db.insert('matches', {
-      tournamentId,
-      round: nextRound,
-      matchNumber: i / 2 + 1,
-      player1Id: completedMatches[i].winnerId!,
-      player2Id: completedMatches[i + 1].winnerId!,
-      player1Score: 0,
-      player2Score: 0,
-      status: 'pending',
-      isFinal
-    })
-
-    // Actualizar nextMatchId para los partidos completados
-    await ctx.db.patch(completedMatches[i]._id, { nextMatchId: newMatchId })
-    await ctx.db.patch(completedMatches[i + 1]._id, { nextMatchId: newMatchId })
-  }
-
-  // Actualizar el torneo
-  await ctx.db.patch(tournamentId, { currentRound: nextRound })
-}
-
 // Obtener detalles del torneo
 export const getTournamentDetails = query({
   args: { tournamentId: v.id('tournaments') },
@@ -229,5 +219,58 @@ export const getTournamentDetails = query({
       .collect()
 
     return { tournament, participants, matches }
+  }
+})
+
+// Registrar el resultado de un juego individual
+export const playGame = mutation({
+  args: {
+    matchId: v.id('matches'),
+    playerId: v.id('users'),
+    move: v.union(v.literal('rock'), v.literal('paper'), v.literal('scissors'))
+  },
+  handler: async (ctx, args) => {
+    const { matchId, playerId, move } = args
+
+    const match = await ctx.db.get(matchId)
+    if (!match) throw new Error('Partido no encontrado')
+
+    if (match.status === 'completed') {
+      throw new Error('Este partido ya ha sido completado')
+    }
+
+    const isPlayer1 = playerId === match.player1Id
+    const updateField = isPlayer1 ? 'player1Move' : 'player2Move'
+
+    const game = await ctx.db.insert('games', {
+      matchId,
+      [updateField]: move,
+      createdAt: Date.now()
+    })
+
+    // get the game
+    const currentGame = await ctx.db.get(game)
+
+    if (!currentGame) throw new Error('Game not found')
+
+    // Si ambos jugadores han hecho su movimiento, determinar el ganador
+    if (currentGame.player1Move && currentGame.player2Move) {
+      const gameWinner = determineWinner(currentGame.player1Move, currentGame.player2Move)
+
+      await ctx.db.patch(currentGame._id, {
+        winnerId: gameWinner === 'tie' ? undefined : match[`${gameWinner}Id`]
+      })
+
+      if (gameWinner !== 'tie') {
+        const updatedMatch = await updateMatchScore(ctx, match, gameWinner)
+        if (updatedMatch.status === 'completed') {
+          await handleMatchCompletion(ctx, updatedMatch)
+        }
+      }
+
+      return gameWinner
+    }
+
+    return 'waiting'
   }
 })
