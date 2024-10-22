@@ -40,6 +40,14 @@ export const getTournaments = query({
   }
 })
 
+// Obtener un torneo
+export const getTournament = query({
+  args: { tournamentId: v.id('tournaments') },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.tournamentId)
+  }
+})
+
 // Eliminar un torneo
 export const deleteTournament = mutation({
   args: { tournamentId: v.id('tournaments') },

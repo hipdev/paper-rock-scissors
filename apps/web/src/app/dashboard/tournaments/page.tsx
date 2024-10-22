@@ -34,16 +34,17 @@ import { Id } from '@packages/backend/convex/_generated/dataModel'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Trash } from 'lucide-react'
 
 type TournamentStatus = 'open' | 'in_progress' | 'completed'
 
 export default function TournamentsPage() {
+  const user = useQuery(api.users.currentUser)
   const tournaments = useQuery(api.tournaments.getTournaments)
   const createTournament = useMutation(api.tournaments.createTournament)
   const deleteTournament = useMutation(api.tournaments.deleteTournament)
   const joinTournament = useMutation(api.tournaments.joinTournament)
-  const user = useQuery(api.users.currentUser)
-
+  const startTournament = useMutation(api.tournaments.startTournament)
   const router = useRouter()
 
   const formRef = useRef<HTMLFormElement>(null)
@@ -100,6 +101,9 @@ export default function TournamentsPage() {
       toast.error((error as Error).message)
     }
   }
+  const handleStartTournament = async (tournamentId: Id<'tournaments'>) => {
+    await startTournament({ tournamentId })
+  }
 
   return (
     <div className='container mx-auto p-4'>
@@ -145,8 +149,8 @@ export default function TournamentsPage() {
         </Dialog>
       </div>
       <Table>
-        <TableHeader>
-          <TableRow>
+        <TableHeader className='hover:bg-none'>
+          <TableRow className='hover:bg-transparent'>
             <TableHead>Name</TableHead>
             <TableHead>Tipo</TableHead>
             <TableHead>Estado</TableHead>
@@ -165,9 +169,9 @@ export default function TournamentsPage() {
               <TableCell>{new Date(tournament.createdAt).toLocaleString()}</TableCell>
               <TableCell>
                 <div className='flex items-center gap-5'>
-                  <Button
-                    variant='outline'
-                    className='py-1 text-blue-500'
+                  <button
+                    type='button'
+                    className='py-1 text-green-600'
                     onClick={() =>
                       handleJoinTournament({
                         tournamentId: tournament._id,
@@ -176,21 +180,33 @@ export default function TournamentsPage() {
                     }
                   >
                     Jugar
-                  </Button>
+                  </button>
                   <Link
-                    className='py-1 text-blue-500'
+                    className='py-1 text-blue-600'
                     href={`/dashboard/${tournament._id}/ranking`}
                   >
-                    Ver
+                    Ranking
                   </Link>
-
-                  <Button
-                    variant='destructive'
-                    size='sm'
-                    onClick={() => handleDeleteTournament(tournament._id)}
-                  >
-                    Eliminar
-                  </Button>
+                  {user?.isAdmin && (
+                    <>
+                      {tournament.status === 'open' && (
+                        <button
+                          type='button'
+                          className='py-1 text-green-600'
+                          onClick={() => startTournament({ tournamentId: tournament._id })}
+                        >
+                          Empezar
+                        </button>
+                      )}
+                      <Button
+                        variant='destructive'
+                        size='sm'
+                        onClick={() => handleDeleteTournament(tournament._id)}
+                      >
+                        <Trash className='h-4 w-4' />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </TableCell>
             </TableRow>
