@@ -4,6 +4,12 @@ import { useMutation, useQuery } from 'convex/react'
 import { BicepsFlexed, Origami, Scissors } from 'lucide-react'
 import { useState } from 'react'
 
+const playValue = {
+  rock: 'piedra',
+  paper: 'papel',
+  scissors: 'tijeras'
+}
+
 export const PlayGame = ({ tournamentId }: { tournamentId: Id<'tournaments'> }) => {
   const [userMove, setUserMove] = useState<'rock' | 'paper' | 'scissors' | null>(null)
 
@@ -11,15 +17,19 @@ export const PlayGame = ({ tournamentId }: { tournamentId: Id<'tournaments'> }) 
   const playGame = useMutation(api.tournaments.playGame)
 
   const handleMove = async (move: 'rock' | 'paper' | 'scissors') => {
+    if (!currentMatch) return
+
     setUserMove(move)
-    // await playGame({
-    //   matchId: tournament.matches[0]._id,
-    //   playerId: userId,
-    //   move
-    // })
+
+    await playGame({
+      matchId: currentMatch._id,
+      move
+    })
   }
 
   if (!currentMatch) return null
+
+  console.log(userMove, 'move', currentMatch)
 
   return (
     <div>
@@ -64,9 +74,11 @@ export const PlayGame = ({ tournamentId }: { tournamentId: Id<'tournaments'> }) 
         </div>
       )}
 
-      {currentMatch.status === 'in_progress' && userMove && (
+      {currentMatch.status === 'pending' && userMove && (
         <div className='mt-4'>
-          <p>Jugaste {userMove}. Esperando a tu oponente...</p>
+          <p>
+            Jugaste <span className='font-semibold text-green-500'>{playValue[userMove]}</span>{' '}
+          </p>
         </div>
       )}
     </div>

@@ -281,7 +281,6 @@ export const getCurrentMatch = query({
 export const playGame = mutation({
   args: {
     matchId: v.id('matches'),
-
     move: v.union(v.literal('rock'), v.literal('paper'), v.literal('scissors'))
   },
   handler: async (ctx, args) => {
@@ -308,35 +307,54 @@ export const playGame = mutation({
     const updateField = isPlayer1 ? 'player1Move' : 'player2Move'
     const otherPlayer = isPlayer1 ? 'player2' : 'player1'
 
-    const game = await ctx.db.insert('games', {
-      matchId,
-      [updateField]: move,
-      createdAt: Date.now()
-    })
+    // Verifica si el juego ya existe para este match
+
+    const existingGame = await ctx.db
+      .query('games')
+      .withIndex('by_match', (q) => q.eq('matchId', matchId))
+      .first()
+
+    if (existingGame) {
+      // Si existe, actualiza el movimiento
+      await ctx.db.patch(existingGame._id, {
+        [updateField]: move
+      })
+    } else {
+      // Si no existe, crea un nuevo juego
+      const game = await ctx.db.insert('games', {
+        matchId,
+        [updateField]: move,
+        createdAt: Date.now()
+      })
+    }
 
     // Cambiar el turno
     await ctx.db.patch(matchId, { currentTurn: otherPlayer })
 
-    // get the game
-    const currentGame = await ctx.db.get(game)
+    // Obtener el juego recien creado o actualizado
+    const currentGame = await ctx.db
+      .query('games')
+      .withIndex('by_match', (q) => q.eq('matchId', matchId))
+      .first()
+
+    console.log('currentGame', currentGame)
     if (!currentGame) throw new Error('Partido no encontrado')
 
     // Si ambos jugadores han hecho su movimiento, determinar el ganador
     if (currentGame.player1Move && currentGame.player2Move) {
-      const gameWinner = determineWinner(currentGame.player1Move, currentGame.player2Move)
-
-      await ctx.db.patch(currentGame._id, {
-        winnerId: gameWinner === 'tie' ? undefined : match[`${gameWinner}Id`]
-      })
-
-      if (gameWinner !== 'tie') {
-        const updatedMatch = await updateMatchScore(ctx, match, gameWinner)
-        if (updatedMatch.status === 'completed') {
-          await handleMatchCompletion(ctx, updatedMatch)
-        }
-      }
-
-      return gameWinner
+      console.log('both moves', currentGame.player1Move, currentGame.player2Move)
+      // const gameWinner = determineWinner(currentGame.player1Move, currentGame.player2Move)
+      // console.log('game winner', gameWinner)
+      // await ctx.db.patch(currentGame._id, {
+      //   winnerId: gameWinner === 'tie' ? undefined : match[`${gameWinner}Id`]
+      // })
+      // if (gameWinner !== 'tie') {
+      //   const updatedMatch = await updateMatchScore(ctx, match, gameWinner)
+      //   if (updatedMatch.status === 'completed') {
+      //     await handleMatchCompletion(ctx, updatedMatch)
+      //   }
+      // }
+      // return gameWinner
     }
 
     return 'waiting'
