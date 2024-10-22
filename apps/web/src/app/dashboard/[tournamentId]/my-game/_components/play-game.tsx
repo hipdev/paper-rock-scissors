@@ -3,6 +3,8 @@ import { Id } from '@packages/backend/convex/_generated/dataModel'
 import { useMutation, useQuery } from 'convex/react'
 import { BicepsFlexed, Origami, Scissors } from 'lucide-react'
 import { useState } from 'react'
+import { GameOver } from './game-over'
+import { cn } from '@/lib/utils'
 
 const playValue = {
   rock: 'piedra',
@@ -26,17 +28,23 @@ export const PlayGame = ({ tournamentId }: { tournamentId: Id<'tournaments'> }) 
       move
     })
   }
+  console.log('move', currentMatch)
 
-  if (!currentMatch) return null
-
-  console.log(userMove, 'move', currentMatch)
+  if (!currentMatch) return <GameOver tournamentId={tournamentId} />
 
   return (
     <div>
-      <h2 className='mb-2 mt-4 text-xl font-semibold'>Tu partida actual</h2>
-      <p>Ronda: {currentMatch.round}</p>
+      <h2
+        className={cn('mb-2 mt-4 text-xl font-semibold', currentMatch.isFinal && 'text-green-500')}
+      >
+        {currentMatch.isFinal ? 'Gran Final' : 'Partida actual'}
+      </h2>
+
+      {!currentMatch.isFinal && <p>Ronda: {currentMatch.round} </p>}
+
       <p>
-        Puntajes: {currentMatch.player1Score} - {currentMatch.player2Score}
+        Puntajes: {currentMatch.player1Name}: {currentMatch.player1Score} -{' '}
+        {currentMatch.player2Name}: {currentMatch.player2Score}
       </p>
 
       {currentMatch && (

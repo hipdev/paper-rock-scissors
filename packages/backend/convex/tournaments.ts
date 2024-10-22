@@ -321,7 +321,7 @@ export const playGame = mutation({
       })
     } else {
       // Si no existe, crea un nuevo juego
-      const game = await ctx.db.insert('games', {
+      await ctx.db.insert('games', {
         matchId,
         [updateField]: move,
         createdAt: Date.now()
@@ -337,26 +337,52 @@ export const playGame = mutation({
       .withIndex('by_match', (q) => q.eq('matchId', matchId))
       .first()
 
-    console.log('currentGame', currentGame)
     if (!currentGame) throw new Error('Partido no encontrado')
 
     // Si ambos jugadores han hecho su movimiento, determinar el ganador
     if (currentGame.player1Move && currentGame.player2Move) {
-      console.log('both moves', currentGame.player1Move, currentGame.player2Move)
       const gameWinner = determineWinner(currentGame.player1Move, currentGame.player2Move)
-      console.log('game winner', gameWinner)
-      // await ctx.db.patch(currentGame._id, {
-      //   winnerId: gameWinner === 'tie' ? undefined : match[`${gameWinner}Id`]
-      // })
-      // if (gameWinner !== 'tie') {
-      //   const updatedMatch = await updateMatchScore(ctx, match, gameWinner)
-      //   if (updatedMatch.status === 'completed') {
-      //     await handleMatchCompletion(ctx, updatedMatch)
-      //   }
-      // }
+
+      await ctx.db.patch(currentGame._id, {
+        winnerId: gameWinner === 'tie' ? undefined : match[`${gameWinner}Id`]
+      })
+      if (gameWinner !== 'tie') {
+        const updatedMatch = await updateMatchScore(ctx, match, gameWinner)
+
+        if (updatedMatch?.status === 'completed') {
+          console.log('updatedMatch', updatedMatch)
+          await handleMatchCompletion(ctx, updatedMatch)
+        }
+      }
       // return gameWinner
     }
 
     return 'waiting'
+  }
+})
+
+// Obtener el match que el jugador perdió, es decir, el match donde winnerId no es el usuario actual
+export const getLostMatch = query({
+  args: { tournamentId: v.id('tournaments') },
+  handler: async (ctx, args) => {
+    const { tournamentId } = args
+    const userId = await getAuthUserId(ctx)
+    if (!userId) throw new Error('Usuario no autenticado')
+
+    const tournament = await ctx.db.get(tournamentId)
+    if (!tournament) throw new Error('Torneo no encontrado')
+
+    console.log('tournament', tournament)
+
+    const myMatches = await ctx.db
+      .query('matches')
+      .withIndex('by_players', (q) => q.eq('player1Id', userId).eq('player2Id', userId))
+      .collect()
+
+    console.log('myMatches', myMatches)
+
+    const lostMatch = myMatches.find((m) => m.winnerId !== userId)
+
+    return lostMatch
   }
 })

@@ -1,4 +1,4 @@
-import { Id } from '../_generated/dataModel'
+import { Doc, Id } from '../_generated/dataModel'
 import { DatabaseReader, DatabaseWriter } from '../_generated/server'
 
 // Función auxiliar para crear partidos de la siguiente ronda
@@ -55,13 +55,22 @@ export function determineWinner(player1Move: string, player2Move: string) {
 }
 
 // Función auxiliar para actualizar la puntuación del partido
-export async function updateMatchScore(ctx: any, match: any, gameWinner: string) {
+export async function updateMatchScore(
+  ctx: {
+    db: DatabaseReader & DatabaseWriter
+  },
+  match: Doc<'matches'>,
+  gameWinner: string
+) {
   const player1Score = gameWinner === 'player1' ? match.player1Score + 1 : match.player1Score
   const player2Score = gameWinner === 'player2' ? match.player2Score + 1 : match.player2Score
 
   const tournament = await ctx.db.get(match.tournamentId)
+
+  console.log('tournament', tournament, player1Score, player2Score)
+
   const isCompleted =
-    tournament.gameType === 'best_of_one'
+    tournament?.gameType === 'best_of_one'
       ? Math.max(player1Score, player2Score) === 1
       : Math.max(player1Score, player2Score) === 2
 
@@ -71,13 +80,18 @@ export async function updateMatchScore(ctx: any, match: any, gameWinner: string)
       : match.player2Id
     : undefined
 
-  return await ctx.db.patch(match._id, {
+  console.log('winnerId', winnerId, isCompleted)
+
+  // update match
+  await ctx.db.patch(match._id, {
     player1Score,
     player2Score,
     winnerId,
     status: isCompleted ? 'completed' : 'in_progress',
-    currentGameNumber: match.currentGameNumber + 1
+    currentGameNumber: match.currentGameNumber ? match.currentGameNumber + 1 : 1
   })
+
+  return await ctx.db.get(match._id)
 }
 
 // Función auxiliar para manejar la finalización de un partido
@@ -85,7 +99,7 @@ export async function handleMatchCompletion(
   ctx: {
     db: DatabaseReader & DatabaseWriter
   },
-  match: any
+  match: Doc<'matches'>
 ) {
   const tournament = await ctx.db.get(match.tournamentId)
   if (!tournament) throw new Error('Torneo no encontrado')

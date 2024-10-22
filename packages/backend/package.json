@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "convex": "^1.16.6",
+    "convex": "^1.17.0",
     "@convex-dev/auth": "^0.0.73"
   }
 }
