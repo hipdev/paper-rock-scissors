@@ -1,6 +1,7 @@
 import { api } from '@packages/backend/convex/_generated/api'
 import { Id } from '@packages/backend/convex/_generated/dataModel'
 import { useMutation, useQuery } from 'convex/react'
+import { BicepsFlexed, Origami, Scissors } from 'lucide-react'
 import { useState } from 'react'
 
 export const PlayGame = ({ tournamentId }: { tournamentId: Id<'tournaments'> }) => {
@@ -22,30 +23,51 @@ export const PlayGame = ({ tournamentId }: { tournamentId: Id<'tournaments'> }) 
 
   return (
     <div>
-      <h2 className='mb-2 mt-4 text-xl font-semibold'>Your Current Match</h2>
-      <p>Round: {currentMatch.round}</p>
+      <h2 className='mb-2 mt-4 text-xl font-semibold'>Tu partida actual</h2>
+      <p>Ronda: {currentMatch.round}</p>
       <p>
-        Score: {currentMatch.player1Score} - {currentMatch.player2Score}
+        Puntajes: {currentMatch.player1Score} - {currentMatch.player2Score}
       </p>
 
       {currentMatch && (
         <div>
-          <h2>Current Match</h2>
           {currentMatch.isYourTurn ? (
-            <div>
-              <p>It's your turn! Make your move:</p>
-              <button onClick={() => handleMove('rock')}>Rock</button>
-              <button onClick={() => handleMove('paper')}>Paper</button>
-              <button onClick={() => handleMove('scissors')}>Scissors</button>
+            <div className='mt-5'>
+              <p>Es tu turno! Elige tu jugada:</p>
+              <div className='mt-5 flex gap-12'>
+                <button
+                  className='flex gap-2 rounded-md border border-white/60 px-4 py-2 transition-colors hover:border-white'
+                  onClick={() => handleMove('rock')}
+                >
+                  <BicepsFlexed className='h-5 w-5' />
+                  Piedra
+                </button>
+                <button
+                  className='flex gap-2 rounded-md border border-white/60 px-4 py-2 transition-colors hover:border-white'
+                  onClick={() => handleMove('paper')}
+                >
+                  <Origami className='h-5 w-5' />
+                  Papel
+                </button>
+                <button
+                  className='flex gap-2 rounded-md border border-white/60 px-4 py-2 transition-colors hover:border-white'
+                  onClick={() => handleMove('scissors')}
+                >
+                  <Scissors className='h-5 w-5' />
+                  Tijeras
+                </button>
+              </div>
             </div>
           ) : (
-            <p>Waiting for your opponent to make a move...</p>
+            <p className='mt-4'>Esperando a tu oponente...</p>
           )}
         </div>
       )}
 
       {currentMatch.status === 'in_progress' && userMove && (
-        <p className='mt-4'>You played {userMove}. Waiting for opponent...</p>
+        <div className='mt-4'>
+          <p>Jugaste {userMove}. Esperando a tu oponente...</p>
+        </div>
       )}
     </div>
   )
