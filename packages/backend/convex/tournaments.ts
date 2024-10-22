@@ -140,7 +140,9 @@ export const startTournament = mutation({
         player1Score: 0,
         player2Score: 0,
         status: 'pending',
-        isFinal: participants.length === 2 // Es final si solo hay 2 jugadores
+        isFinal: participants.length === 2, // Es final si solo hay 2 jugadores
+        currentTurn: 'player1', // Inicializamos con el turno del jugador 1
+        currentGameNumber: 1
       })
     }
 
@@ -207,7 +209,7 @@ export const completeMatch = mutation({
   }
 })
 
-// Obtener detalles del torneo
+// Obtener detalles del torneo (Esto podría ser para el ranking)
 export const getTournamentDetails = query({
   args: { tournamentId: v.id('tournaments') },
   handler: async (ctx, args) => {
@@ -230,15 +232,63 @@ export const getTournamentDetails = query({
   }
 })
 
+// Obtener el match actual para el jugador
+export const getCurrentMatch = query({
+  args: { tournamentId: v.id('tournaments') },
+  handler: async (ctx, args) => {
+    const { tournamentId } = args
+    const userId = await getAuthUserId(ctx)
+    if (!userId) throw new Error('Usuario no autenticado')
+
+    const tournament = await ctx.db.get(tournamentId)
+    if (!tournament) throw new Error('Torneo no encontrado')
+
+    if (tournament.status !== 'in_progress') {
+      throw new Error('El torneo no está en progreso')
+    }
+
+    // Buscar el partido actual del jugador
+    const currentMatch = await ctx.db
+      .query('matches')
+      .withIndex('by_tournament_and_round', (q) =>
+        q.eq('tournamentId', tournamentId).eq('round', tournament.currentRound || 0)
+      )
+      .filter((q) => q.or(q.eq(q.field('player1Id'), userId), q.eq(q.field('player2Id'), userId)))
+      .first()
+
+    if (!currentMatch) {
+      return null // El jugador no tiene un partido actual en esta ronda
+    }
+
+    // Obtener los nombres de los jugadores
+    const player1 = await ctx.db.get(currentMatch.player1Id)
+    const player2 = await ctx.db.get(currentMatch.player2Id)
+
+    return {
+      ...currentMatch,
+      player1Name: player1?.name || 'Unknown',
+      player2Name: player2?.name || 'Unknown',
+      isCurrentPlayer: userId === currentMatch.player1Id ? 'player1' : 'player2',
+      isYourTurn:
+        userId === currentMatch.player1Id
+          ? currentMatch.currentTurn === 'player1'
+          : currentMatch.currentTurn === 'player2'
+    }
+  }
+})
+
 // Registrar el resultado de un juego individual
 export const playGame = mutation({
   args: {
     matchId: v.id('matches'),
-    playerId: v.id('users'),
+
     move: v.union(v.literal('rock'), v.literal('paper'), v.literal('scissors'))
   },
   handler: async (ctx, args) => {
-    const { matchId, playerId, move } = args
+    const { matchId, move } = args
+
+    const userId = await getAuthUserId(ctx)
+    if (!userId) throw new Error('Usuario no autenticado')
 
     const match = await ctx.db.get(matchId)
     if (!match) throw new Error('Partido no encontrado')
@@ -247,8 +297,16 @@ export const playGame = mutation({
       throw new Error('Este partido ya ha sido completado')
     }
 
-    const isPlayer1 = playerId === match.player1Id
+    const isPlayer1 = userId === match.player1Id
+    if (
+      (isPlayer1 && match.currentTurn !== 'player1') ||
+      (!isPlayer1 && match.currentTurn !== 'player2')
+    ) {
+      throw new Error('No es tu turno')
+    }
+
     const updateField = isPlayer1 ? 'player1Move' : 'player2Move'
+    const otherPlayer = isPlayer1 ? 'player2' : 'player1'
 
     const game = await ctx.db.insert('games', {
       matchId,
@@ -256,10 +314,12 @@ export const playGame = mutation({
       createdAt: Date.now()
     })
 
+    // Cambiar el turno
+    await ctx.db.patch(matchId, { currentTurn: otherPlayer })
+
     // get the game
     const currentGame = await ctx.db.get(game)
-
-    if (!currentGame) throw new Error('Game not found')
+    if (!currentGame) throw new Error('Partido no encontrado')
 
     // Si ambos jugadores han hecho su movimiento, determinar el ganador
     if (currentGame.player1Move && currentGame.player2Move) {

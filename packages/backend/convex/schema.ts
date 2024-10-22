@@ -58,7 +58,8 @@ const schema = defineSchema({
     status: v.union(v.literal('pending'), v.literal('in_progress'), v.literal('completed')),
     isFinal: v.boolean(),
     nextMatchId: v.optional(v.id('matches')),
-    currentGameNumber: v.optional(v.number())
+    currentGameNumber: v.optional(v.number()),
+    currentTurn: v.optional(v.union(v.literal('player1'), v.literal('player2')))
   })
     .index('by_tournament_and_round', ['tournamentId', 'round'])
     .index('by_players', ['player1Id', 'player2Id'])
