@@ -29,7 +29,9 @@ export async function createNextRoundMatches(
       player1Score: 0,
       player2Score: 0,
       status: 'pending',
-      isFinal
+      isFinal,
+      currentTurn: 'player1', // Establecemos el turno inicial como player1
+      currentGameNumber: 1
     })
 
     // Actualizar nextMatchId para los partidos completados

@@ -161,6 +161,7 @@ export default function TournamentsPage() {
           <TableRow className='hover:bg-transparent'>
             <TableHead>Name</TableHead>
             <TableHead>Type</TableHead>
+            <TableHead>Players</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Created at</TableHead>
             <TableHead>Actions</TableHead>
@@ -173,6 +174,7 @@ export default function TournamentsPage() {
               <TableCell>
                 {tournament.gameType === 'best_of_one' ? 'Direct elimination' : 'Best of two'}
               </TableCell>
+              <TableCell>{tournament.playerCount}</TableCell>
               <TableCell>{gameStatus[tournament.status]}</TableCell>
               <TableCell>{new Date(tournament.createdAt).toLocaleString()}</TableCell>
               <TableCell>
