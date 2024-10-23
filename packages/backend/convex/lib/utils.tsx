@@ -119,7 +119,8 @@ export async function handleMatchCompletion(
       // Finalizar el torneo
       await ctx.db.patch(match.tournamentId, {
         status: 'completed',
-        completedAt: Date.now()
+        completedAt: Date.now(),
+        winnerId: match.winnerId // Establecemos el ganador del torneo
       })
     } else {
       // Crear partidos para la siguiente ronda

@@ -35,7 +35,8 @@ const schema = defineSchema({
     completedAt: v.optional(v.number()),
     playerCount: v.number(), // Número actual de jugadores inscritos
     currentRound: v.optional(v.number()),
-    totalRounds: v.optional(v.number())
+    totalRounds: v.optional(v.number()),
+    winnerId: v.optional(v.id('users'))
   }).index('by_status', ['status']),
 
   tournamentUsers: defineTable({

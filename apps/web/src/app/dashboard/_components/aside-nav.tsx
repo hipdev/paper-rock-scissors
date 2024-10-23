@@ -20,13 +20,13 @@ export default function AsideNav() {
       <CustomLink
         href={`/dashboard/users`}
         IconComponent={<Users size={20} className={iconClassName} />}
-        label='Jugadores'
+        label='Players'
         isCollapsed={isCollapsed}
       />
       <CustomLink
         href='/dashboard/tournaments'
         IconComponent={<Users size={20} className={iconClassName} />}
-        label='Torneos'
+        label='Tournaments'
         isCollapsed={isCollapsed}
       />
     </nav>

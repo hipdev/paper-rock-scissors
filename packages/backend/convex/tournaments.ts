@@ -1,4 +1,4 @@
-import { v } from 'convex/values'
+import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 
 import { getAuthUserId } from '@convex-dev/auth/server'
@@ -54,11 +54,11 @@ export const deleteTournament = mutation({
   args: { tournamentId: v.id('tournaments') },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx)
-    if (!userId) throw new Error('Usuario no autenticado')
+    if (!userId) throw new Error('User not authenticated')
 
     const user = await ctx.db.get(userId)
 
-    if (!user?.isAdmin) throw new Error('No tienes permisos para eliminar torneos')
+    if (!user?.isAdmin) throw new Error('You do not have permission to delete tournaments')
 
     const { tournamentId } = args
     await ctx.db.delete(tournamentId)
@@ -71,13 +71,13 @@ export const joinTournament = mutation({
   handler: async (ctx, args) => {
     const { tournamentId } = args
     const userId = await getAuthUserId(ctx)
-    if (!userId) throw new Error('Usuario no autenticado')
+    if (!userId) throw new Error('User not authenticated')
 
     const tournament = await ctx.db.get(tournamentId)
-    if (!tournament) throw new Error('Torneo no encontrado')
+    if (!tournament) throw new Error('Tournament not found')
 
     if (tournament.status !== 'open') {
-      throw new Error('No se puede unir a un torneo que ya ha comenzado o terminado')
+      throw new Error('You cannot join a tournament that has already started or ended')
     }
 
     // check if user is already in the tournament
@@ -112,10 +112,10 @@ export const startTournament = mutation({
     const { tournamentId } = args
 
     const tournament = await ctx.db.get(tournamentId)
-    if (!tournament) throw new Error('Torneo no encontrado')
+    if (!tournament) throw new Error('Tournament not found')
 
     if (tournament.status !== 'open') {
-      throw new Error('El torneo ya ha comenzado o terminado')
+      throw new Error('The tournament has already started or ended')
     }
 
     const participants = await ctx.db
@@ -124,7 +124,12 @@ export const startTournament = mutation({
       .collect()
 
     if (participants.length !== tournament.playerCount) {
-      throw new Error('El número de participantes no coincide con el requerido')
+      throw new Error('The number of participants does not match the required number')
+    }
+
+    // Los participantes deben ser pares
+    if (participants.length % 2 !== 0) {
+      throw new ConvexError('The number of participants must be even')
     }
 
     // Ordenar participantes por seed
@@ -167,10 +172,10 @@ export const completeMatch = mutation({
     const { matchId, player1Score, player2Score } = args
 
     const match = await ctx.db.get(matchId)
-    if (!match) throw new Error('Partido no encontrado')
+    if (!match) throw new Error('Match not found')
 
     if (match.status === 'completed') {
-      throw new Error('Este partido ya ha sido completado')
+      throw new Error('This match has already been completed')
     }
 
     const winnerId = player1Score > player2Score ? match.player1Id : match.player2Id
@@ -183,7 +188,7 @@ export const completeMatch = mutation({
     })
 
     const tournament = await ctx.db.get(match.tournamentId)
-    if (!tournament) throw new Error('Torneo no encontrado')
+    if (!tournament) throw new Error('Tournament not found')
 
     // Verificar si todos los partidos de la ronda actual están completos
     const allMatchesInRound = await ctx.db
@@ -217,7 +222,7 @@ export const getTournamentDetails = query({
     const { tournamentId } = args
 
     const tournament = await ctx.db.get(tournamentId)
-    if (!tournament) throw new Error('Torneo no encontrado')
+    if (!tournament) throw new Error('Tournament not found')
 
     const participants = await ctx.db
       .query('tournamentUsers')
@@ -229,7 +234,12 @@ export const getTournamentDetails = query({
       .withIndex('by_tournament_and_round', (q) => q.eq('tournamentId', tournamentId))
       .collect()
 
-    return { tournament, participants, matches }
+    let winner = null
+    if (tournament.status === 'completed' && tournament.winnerId) {
+      winner = await ctx.db.get(tournament.winnerId)
+    }
+
+    return { tournament, participants, matches, winner }
   }
 })
 
@@ -239,13 +249,13 @@ export const getCurrentMatch = query({
   handler: async (ctx, args) => {
     const { tournamentId } = args
     const userId = await getAuthUserId(ctx)
-    if (!userId) throw new Error('Usuario no autenticado')
+    if (!userId) throw new Error('User not authenticated')
 
     const tournament = await ctx.db.get(tournamentId)
-    if (!tournament) throw new Error('Torneo no encontrado')
+    if (!tournament) throw new Error('Tournament not found')
 
     if (tournament.status !== 'in_progress') {
-      throw new Error('El torneo no está en progreso')
+      throw new Error('The tournament is not in progress')
     }
 
     // Buscar el partido actual del jugador
@@ -288,13 +298,13 @@ export const playGame = mutation({
     const { matchId, move } = args
 
     const userId = await getAuthUserId(ctx)
-    if (!userId) throw new Error('Usuario no autenticado')
+    if (!userId) throw new Error('User not authenticated')
 
     const match = await ctx.db.get(matchId)
-    if (!match) throw new Error('Partido no encontrado')
+    if (!match) throw new Error('Match not found')
 
     if (match.status === 'completed') {
-      throw new Error('Este partido ya ha sido completado')
+      throw new Error('This match has already been completed')
     }
 
     const isPlayer1 = userId === match.player1Id
@@ -302,7 +312,7 @@ export const playGame = mutation({
       (isPlayer1 && match.currentTurn !== 'player1') ||
       (!isPlayer1 && match.currentTurn !== 'player2')
     ) {
-      throw new Error('No es tu turno')
+      throw new Error('It is not your turn')
     }
 
     const updateField = isPlayer1 ? 'player1Move' : 'player2Move'
@@ -338,7 +348,7 @@ export const playGame = mutation({
       .withIndex('by_match', (q) => q.eq('matchId', matchId))
       .first()
 
-    if (!currentGame) throw new Error('Partido no encontrado')
+    if (!currentGame) throw new Error('Match not found')
 
     // Si ambos jugadores han hecho su movimiento, determinar el ganador
     if (currentGame.player1Move && currentGame.player2Move) {
@@ -368,10 +378,10 @@ export const getLostMatch = query({
   handler: async (ctx, args) => {
     const { tournamentId } = args
     const userId = await getAuthUserId(ctx)
-    if (!userId) throw new Error('Usuario no autenticado')
+    if (!userId) throw new Error('User not authenticated')
 
     const tournament = await ctx.db.get(tournamentId)
-    if (!tournament) throw new Error('Torneo no encontrado')
+    if (!tournament) throw new Error('Tournament not found')
 
     const lostMatch = await ctx.db
       .query('matches')
@@ -391,6 +401,34 @@ export const getLostMatch = query({
       winnerIdData,
       player1Move: userId === lostMatch?.player1Id ? lostGame?.player1Move : lostGame?.player2Move,
       player2Move: userId === lostMatch?.player2Id ? lostGame?.player1Move : lostGame?.player2Move
+    }
+  }
+})
+
+// Obtener el ganador del torneo
+export const getTournamentWinner = query({
+  args: { tournamentId: v.id('tournaments') },
+  handler: async (ctx, args) => {
+    const { tournamentId } = args
+
+    const tournament = await ctx.db.get(tournamentId)
+    if (!tournament) throw new Error('Tournament not found')
+
+    if (tournament.status !== 'completed') {
+      throw new Error('The tournament has not yet ended')
+    }
+
+    if (!tournament.winnerId) {
+      throw new Error('No winner has been registered for this tournament')
+    }
+
+    const winner = await ctx.db.get(tournament.winnerId)
+    if (!winner) throw new Error('Winner not found')
+
+    return {
+      tournamentName: tournament.name,
+      winnerName: winner.name,
+      winnerId: winner._id
     }
   }
 })

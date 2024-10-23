@@ -35,6 +35,7 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Trash } from 'lucide-react'
+import { ConvexError } from 'convex/values'
 
 type TournamentStatus = 'open' | 'in_progress' | 'completed'
 
@@ -68,15 +69,15 @@ export default function TournamentsPage() {
   }
 
   const gameStatus = {
-    open: 'Abierto',
-    in_progress: 'En progreso',
-    completed: 'Completado'
+    open: 'Open',
+    in_progress: 'In progress',
+    completed: 'Completed'
   }
 
   const handleDeleteTournament = async (tournamentId: Id<'tournaments'>) => {
     try {
       await deleteTournament({ tournamentId })
-      toast.success('Torneo eliminado correctamente')
+      toast.success('Tournament deleted successfully')
     } catch (error) {
       toast.error((error as Error).message)
     }
@@ -101,48 +102,55 @@ export default function TournamentsPage() {
       toast.error((error as Error).message)
     }
   }
+
   const handleStartTournament = async (tournamentId: Id<'tournaments'>) => {
-    await startTournament({ tournamentId })
+    try {
+      await startTournament({ tournamentId })
+    } catch (error) {
+      const errorMessage = error instanceof ConvexError ? error.data : 'There was an error'
+
+      toast.error(errorMessage)
+    }
   }
 
   return (
     <div className='container mx-auto p-4'>
       <div className='mb-4 flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>Torneos</h1>
+        <h1 className='text-2xl font-bold'>Tournaments</h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>Crear Torneo</Button>
+            <Button>Create Tournament</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Crear Torneo</DialogTitle>
-              <DialogDescription>Ingresa los detalles para el nuevo torneo.</DialogDescription>
+              <DialogTitle>Create Tournament</DialogTitle>
+              <DialogDescription>Enter the details for the new tournament.</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreateTournament} ref={formRef}>
               <div className='grid gap-4 py-4'>
                 <div className='grid grid-cols-4 items-center gap-4'>
                   <Label htmlFor='name' className='text-right'>
-                    Nombre
+                    Name
                   </Label>
                   <Input id='name' name='name' className='col-span-3' required />
                 </div>
                 <div className='grid grid-cols-4 items-center gap-4'>
                   <Label htmlFor='gameType' className='text-right'>
-                    Tipo
+                    Type
                   </Label>
                   <Select name='gameType' defaultValue='best_of_one'>
                     <SelectTrigger className='col-span-3'>
-                      <SelectValue placeholder='Selecciona un tipo de torneo' />
+                      <SelectValue placeholder='Select a tournament type' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value='best_of_one'>Mejor de uno</SelectItem>
-                      <SelectItem value='best_of_two'>Mejor de dos</SelectItem>
+                      <SelectItem value='best_of_one'>Best of one</SelectItem>
+                      <SelectItem value='best_of_two'>Best of two</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className='flex justify-end'>
-                <Button type='submit'>Crear Torneo</Button>
+                <Button type='submit'>Create Tournament</Button>
               </div>
             </form>
           </DialogContent>
@@ -152,10 +160,10 @@ export default function TournamentsPage() {
         <TableHeader className='hover:bg-none'>
           <TableRow className='hover:bg-transparent'>
             <TableHead>Name</TableHead>
-            <TableHead>Tipo</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead>Creado en</TableHead>
-            <TableHead>Acciones</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Created at</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -163,24 +171,26 @@ export default function TournamentsPage() {
             <TableRow key={tournament._id} className='hover:bg-neutral-900'>
               <TableCell>{tournament.name}</TableCell>
               <TableCell>
-                {tournament.gameType === 'best_of_one' ? 'Eliminación directa' : 'Mejor de dos'}
+                {tournament.gameType === 'best_of_one' ? 'Direct elimination' : 'Best of two'}
               </TableCell>
               <TableCell>{gameStatus[tournament.status]}</TableCell>
               <TableCell>{new Date(tournament.createdAt).toLocaleString()}</TableCell>
               <TableCell>
                 <div className='flex items-center gap-5'>
-                  <button
-                    type='button'
-                    className='py-1 text-green-600'
-                    onClick={() =>
-                      handleJoinTournament({
-                        tournamentId: tournament._id,
-                        status: tournament.status
-                      })
-                    }
-                  >
-                    Jugar
-                  </button>
+                  {tournament.status !== 'completed' && (
+                    <button
+                      type='button'
+                      className='py-1 text-green-600'
+                      onClick={() =>
+                        handleJoinTournament({
+                          tournamentId: tournament._id,
+                          status: tournament.status
+                        })
+                      }
+                    >
+                      Play
+                    </button>
+                  )}
                   <Link
                     className='py-1 text-blue-600'
                     href={`/dashboard/${tournament._id}/ranking`}
@@ -193,9 +203,9 @@ export default function TournamentsPage() {
                         <button
                           type='button'
                           className='py-1 text-green-600'
-                          onClick={() => startTournament({ tournamentId: tournament._id })}
+                          onClick={() => handleStartTournament(tournament._id)}
                         >
-                          Empezar
+                          Start
                         </button>
                       )}
                       <Button
