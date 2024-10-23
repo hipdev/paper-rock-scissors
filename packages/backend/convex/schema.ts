@@ -1,9 +1,14 @@
 import { v } from 'convex/values'
-import { authTables } from '@convex-dev/auth/server'
+
 import { defineSchema, defineTable } from 'convex/server'
+import { authTables } from '@convex-dev/auth/server'
+
+interface AuthTables {
+  authSessions: any
+}
 
 const schema = defineSchema({
-  ...(authTables as any),
+  ...(authTables as AuthTables),
   // Users table (updated)
   users: defineTable({
     email: v.optional(v.string()),
@@ -63,6 +68,7 @@ const schema = defineSchema({
   })
     .index('by_tournament_and_round', ['tournamentId', 'round'])
     .index('by_players', ['player1Id', 'player2Id'])
+    .index('by_winner', ['winnerId'])
     .index('by_tournament_round_and_number', ['tournamentId', 'round', 'matchNumber']),
 
   games: defineTable({

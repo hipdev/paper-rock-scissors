@@ -8,6 +8,7 @@ import {
   handleMatchCompletion,
   updateMatchScore
 } from './lib/utils'
+import { Id } from './_generated/dataModel'
 
 // Crear un nuevo torneo
 export const createTournament = mutation({
@@ -361,7 +362,7 @@ export const playGame = mutation({
   }
 })
 
-// Obtener el match que el jugador perdió, es decir, el match donde winnerId no es el usuario actual
+// Obtener el match y el game que el jugador perdió, es decir, el match donde winnerId no es el usuario actual
 export const getLostMatch = query({
   args: { tournamentId: v.id('tournaments') },
   handler: async (ctx, args) => {
@@ -372,17 +373,24 @@ export const getLostMatch = query({
     const tournament = await ctx.db.get(tournamentId)
     if (!tournament) throw new Error('Torneo no encontrado')
 
-    console.log('tournament', tournament)
-
-    const myMatches = await ctx.db
+    const lostMatch = await ctx.db
       .query('matches')
-      .withIndex('by_players', (q) => q.eq('player1Id', userId).eq('player2Id', userId))
-      .collect()
+      .filter((q) => q.neq(q.field('winnerId'), userId))
+      .first()
 
-    console.log('myMatches', myMatches)
+    const lostGame = await ctx.db
+      .query('games')
+      .withIndex('by_match', (q) => q.eq('matchId', lostMatch?._id as Id<'matches'>))
+      .first()
 
-    const lostMatch = myMatches.find((m) => m.winnerId !== userId)
+    const winnerIdData = await ctx.db.get(lostMatch?.winnerId as Id<'users'>)
 
-    return lostMatch
+    return {
+      match: lostMatch,
+      game: lostGame,
+      winnerIdData,
+      player1Move: userId === lostMatch?.player1Id ? lostGame?.player1Move : lostGame?.player2Move,
+      player2Move: userId === lostMatch?.player2Id ? lostGame?.player1Move : lostGame?.player2Move
+    }
   }
 })

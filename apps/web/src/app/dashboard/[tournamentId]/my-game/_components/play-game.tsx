@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { GameOver } from './game-over'
 import { cn } from '@/lib/utils'
 
-const playValue = {
+export const playValue = {
   rock: 'piedra',
   paper: 'papel',
   scissors: 'tijeras'
