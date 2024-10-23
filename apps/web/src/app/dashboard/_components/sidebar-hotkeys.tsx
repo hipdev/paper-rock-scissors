@@ -51,33 +51,15 @@ export default function SidebarHotkeys() {
                 <span className='bg-primary-foreground flex items-center gap-1 rounded-sm px-2 py-0 text-xs font-semibold text-black'>
                   Shift <Plus className='w-3.5' /> 1
                 </span>
-                Reservas
+                Jugadores
               </li>
               <li className='flex items-center gap-2 rounded-md bg-white/10 px-2.5 py-2 shadow'>
                 <span className='bg-primary-foreground flex items-center gap-1 rounded-sm px-2 py-0 text-xs font-semibold text-black'>
                   Shift <Plus className='w-3.5' /> 2
                 </span>
-                Usuarios
-              </li>
-              <li className='flex items-center gap-2 rounded-md bg-white/10 px-2.5 py-2 shadow'>
-                <span className='bg-primary-foreground flex items-center gap-1 rounded-sm px-2 py-0 text-xs font-semibold text-black'>
-                  Shift <Plus className='w-3.5' /> 3
-                </span>
-                Solicitudes
+                Torneos
               </li>
 
-              <li className='flex items-center gap-2 rounded-md bg-white/10 px-2.5 py-2 shadow'>
-                <span className='bg-primary-foreground flex items-center gap-1 rounded-sm px-2 py-0 text-xs font-semibold text-black'>
-                  Shift <Plus className='w-3.5' /> 4
-                </span>
-                Propiedades
-              </li>
-              <li className='flex items-center gap-2 rounded-md bg-white/10 px-2.5 py-2 shadow'>
-                <span className='bg-primary-foreground flex items-center gap-1 rounded-sm px-2 py-0 text-xs font-semibold text-black'>
-                  Shift <Plus className='w-3.5' /> 4
-                </span>
-                Áreas comunes
-              </li>
               <li className='flex items-center gap-2 rounded-md bg-white/10 px-2.5 py-2 shadow'>
                 <span className='bg-primary-foreground flex items-center gap-1 rounded-sm px-2 py-0 text-xs font-semibold text-black'>
                   Shift <Plus className='w-3.5' /> 5
