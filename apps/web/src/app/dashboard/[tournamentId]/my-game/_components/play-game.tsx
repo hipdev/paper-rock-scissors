@@ -49,6 +49,11 @@ export const PlayGame = ({ tournamentId }: { tournamentId: Id<'tournaments'> }) 
 
       {currentMatch && (
         <div>
+          {currentMatch.lastGameResult === 'tie' && <p>El último juego fue un empate</p>}
+          {currentMatch.lastGameResult !== 'tie' && (
+            <p>El ganador del último juego fue {currentMatch.lastGameResult}</p>
+          )}
+
           {currentMatch.isYourTurn ? (
             <div className='mt-5'>
               <p>Es tu turno! Elige tu jugada:</p>

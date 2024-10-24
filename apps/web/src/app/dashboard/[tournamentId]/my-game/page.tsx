@@ -18,7 +18,6 @@ export default function TournamentPage() {
   const { isAuthenticated } = useConvexAuth()
 
   const tournament = useQuery(api.tournaments.getTournament, { tournamentId })
-  const tournamentDetails = useQuery(api.tournaments.getTournamentDetails, { tournamentId })
 
   if (!isAuthenticated || !tournament) {
     return <div>Loading...</div>

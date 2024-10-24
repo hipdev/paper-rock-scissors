@@ -77,7 +77,8 @@ const schema = defineSchema({
     player1Move: v.optional(v.union(v.literal('rock'), v.literal('paper'), v.literal('scissors'))),
     player2Move: v.optional(v.union(v.literal('rock'), v.literal('paper'), v.literal('scissors'))),
     winnerId: v.optional(v.id('users')), // Changed from players to users
-    createdAt: v.number()
+    createdAt: v.number(),
+    result: v.optional(v.union(v.literal('player1'), v.literal('player2'), v.literal('tie'))) // Nuevo campo
   }).index('by_match', ['matchId'])
 })
 

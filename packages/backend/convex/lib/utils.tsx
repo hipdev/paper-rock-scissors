@@ -71,15 +71,19 @@ export async function updateMatchScore(
 
   console.log('tournament', tournament, player1Score, player2Score)
 
-  const isCompleted =
-    tournament?.gameType === 'best_of_one'
-      ? Math.max(player1Score, player2Score) === 1
-      : Math.max(player1Score, player2Score) === 2
+  const isBestOfTwo = match.isFinal || tournament?.gameType === 'best_of_two'
+  const isCompleted = isBestOfTwo
+    ? player1Score === 2 ||
+      player2Score === 2 ||
+      (player1Score === 1 && player2Score === 1 && match.currentGameNumber === 2)
+    : Math.max(player1Score, player2Score) === 1
 
   const winnerId = isCompleted
     ? player1Score > player2Score
       ? match.player1Id
-      : match.player2Id
+      : player2Score > player1Score
+        ? match.player2Id
+        : undefined // En caso de empate en la final
     : undefined
 
   console.log('winnerId', winnerId, isCompleted)

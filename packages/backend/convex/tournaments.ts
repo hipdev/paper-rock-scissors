@@ -8,7 +8,7 @@ import {
   handleMatchCompletion,
   updateMatchScore
 } from './lib/utils'
-import { Id } from './_generated/dataModel'
+import { Doc, Id } from './_generated/dataModel'
 
 // Crear un nuevo torneo
 export const createTournament = mutation({
@@ -271,6 +271,12 @@ export const getCurrentMatch = query({
       return null // El jugador no tiene un partido actual en esta ronda
     }
 
+    const lastGame = await ctx.db
+      .query('games')
+      .withIndex('by_match', (q) => q.eq('matchId', currentMatch._id))
+      .order('desc')
+      .first()
+
     // Obtener los nombres de los jugadores
     const player1 = await ctx.db.get(currentMatch.player1Id)
     const player2 = await ctx.db.get(currentMatch.player2Id)
@@ -283,7 +289,12 @@ export const getCurrentMatch = query({
       isYourTurn:
         userId === currentMatch.player1Id
           ? currentMatch.currentTurn === 'player1'
-          : currentMatch.currentTurn === 'player2'
+          : currentMatch.currentTurn === 'player2',
+      lastGameResult: lastGame?.result, // Incluimos el resultado del último juego
+      lastGameMoves: {
+        player1Move: lastGame?.player1Move,
+        player2Move: lastGame?.player2Move
+      }
     }
   }
 })
@@ -298,77 +309,99 @@ export const playGame = mutation({
     const { matchId, move } = args
 
     const userId = await getAuthUserId(ctx)
-    if (!userId) throw new Error('User not authenticated')
+    if (!userId) throw new ConvexError('User not authenticated')
 
     const match = await ctx.db.get(matchId)
-    if (!match) throw new Error('Match not found')
+    if (!match) throw new ConvexError('Match not found')
 
     if (match.status === 'completed') {
-      throw new Error('This match has already been completed')
+      throw new ConvexError('This match has already been completed')
     }
+
+    const tournament = await ctx.db.get(match.tournamentId)
+    if (!tournament) throw new ConvexError('Tournament not found')
 
     const isPlayer1 = userId === match.player1Id
     if (
       (isPlayer1 && match.currentTurn !== 'player1') ||
       (!isPlayer1 && match.currentTurn !== 'player2')
     ) {
-      throw new Error('It is not your turn')
+      throw new ConvexError('It is not your turn')
     }
 
     const updateField = isPlayer1 ? 'player1Move' : 'player2Move'
-    const otherPlayer = isPlayer1 ? 'player2' : 'player1'
 
-    // Verifica si el juego ya existe para este match
-
-    const existingGame = await ctx.db
+    // Obtener el juego actual o crear uno nuevo
+    const currentGame = await ctx.db
       .query('games')
       .withIndex('by_match', (q) => q.eq('matchId', matchId))
+      .order('desc')
       .first()
 
-    if (existingGame) {
-      // Si existe, actualiza el movimiento
-      await ctx.db.patch(existingGame._id, {
-        [updateField]: move
-      })
-    } else {
-      // Si no existe, crea un nuevo juego
+    if (!currentGame || (currentGame.player1Move && currentGame.player2Move)) {
+      // Crear un nuevo juego
       await ctx.db.insert('games', {
         matchId,
         [updateField]: move,
         createdAt: Date.now()
       })
+    } else {
+      // Actualizar el juego existente
+      await ctx.db.patch(currentGame._id, { [updateField]: move })
     }
 
-    // Cambiar el turno
-    await ctx.db.patch(matchId, { currentTurn: otherPlayer })
-
-    // Obtener el juego recien creado o actualizado
-    const currentGame = await ctx.db
+    // Obtener el juego actualizado
+    const updatedGame = await ctx.db
       .query('games')
       .withIndex('by_match', (q) => q.eq('matchId', matchId))
+      .order('desc')
       .first()
 
-    if (!currentGame) throw new Error('Match not found')
+    if (!updatedGame) throw new ConvexError('Game not found')
 
-    // Si ambos jugadores han hecho su movimiento, determinar el ganador
-    if (currentGame.player1Move && currentGame.player2Move) {
-      const gameWinner = determineWinner(currentGame.player1Move, currentGame.player2Move)
+    // Si ambos jugadores han hecho su movimiento
+    if (updatedGame.player1Move && updatedGame.player2Move) {
+      const gameWinner = determineWinner(updatedGame.player1Move, updatedGame.player2Move)
 
-      await ctx.db.patch(currentGame._id, {
-        winnerId: gameWinner === 'tie' ? undefined : match[`${gameWinner}Id`]
+      await ctx.db.patch(updatedGame._id, {
+        winnerId:
+          gameWinner === 'tie' ? undefined : match[`${gameWinner}Id` as 'player1Id' | 'player2Id'],
+        result: gameWinner
       })
+
       if (gameWinner !== 'tie') {
         const updatedMatch = await updateMatchScore(ctx, match, gameWinner)
 
-        if (updatedMatch?.status === 'completed') {
-          console.log('updatedMatch', updatedMatch)
-          await handleMatchCompletion(ctx, updatedMatch)
-        }
-      }
-      // return gameWinner
-    }
+        // Determinar si el partido ha terminado
+        const isBestOfTwo = match.isFinal || tournament.gameType === 'best_of_two'
+        const isMatchCompleted = isBestOfTwo
+          ? updatedMatch?.player1Score === 2 ||
+            updatedMatch?.player2Score === 2 ||
+            (updatedMatch?.player1Score === 1 &&
+              updatedMatch?.player2Score === 1 &&
+              updatedMatch?.currentGameNumber === 2)
+          : Math.max(updatedMatch?.player1Score || 0, updatedMatch?.player2Score || 0) === 1
 
-    return 'waiting'
+        if (isMatchCompleted) {
+          await ctx.db.patch(matchId, { status: 'completed' })
+          await handleMatchCompletion(ctx, updatedMatch as Doc<'matches'>)
+        } else {
+          // Cambiar el turno solo si el partido no ha terminado
+          const nextTurn = match.currentTurn === 'player1' ? 'player2' : 'player1'
+          await ctx.db.patch(matchId, { currentTurn: nextTurn })
+        }
+      } else {
+        // En caso de empate, mantener el mismo turno
+        await ctx.db.patch(matchId, { currentTurn: match.currentTurn })
+      }
+
+      return gameWinner
+    } else {
+      // Si solo un jugador ha hecho su movimiento, cambiar el turno
+      const nextTurn = match.currentTurn === 'player1' ? 'player2' : 'player1'
+      await ctx.db.patch(matchId, { currentTurn: nextTurn })
+      return 'waiting'
+    }
   }
 })
 
