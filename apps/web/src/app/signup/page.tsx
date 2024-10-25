@@ -22,8 +22,6 @@ export default function SignupPage() {
     if (password !== repeatPassword) {
       setError('Passwords do not match')
     } else {
-      console.log(email, password)
-
       const formData = new FormData()
       formData.append('flow', 'signUp')
       formData.append('email', email)
@@ -41,8 +39,6 @@ export default function SignupPage() {
           })
           setError('La contraseña debe ser mas fuerte')
         })
-
-      console.log(await res, 'res')
     }
   }
 

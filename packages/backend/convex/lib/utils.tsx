@@ -81,8 +81,6 @@ export async function updateMatchScore(
       : match.player2Id
     : undefined
 
-  console.log('Match update:', { player1Score, player2Score, isCompleted, winnerId })
-
   // update match
   await ctx.db.patch(match._id, {
     player1Score,

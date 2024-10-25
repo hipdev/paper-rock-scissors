@@ -9,8 +9,6 @@ import { playValue } from './play-game'
 export const GameOver = ({ tournamentId }: { tournamentId: Id<'tournaments'> }) => {
   const lostMatch = useQuery(api.tournaments.getLostMatch, { tournamentId })
 
-  console.log('lostMatch', lostMatch)
-
   return (
     <div>
       <h3 className='text-2xl font-semibold text-red-500'>Ouch!</h3>

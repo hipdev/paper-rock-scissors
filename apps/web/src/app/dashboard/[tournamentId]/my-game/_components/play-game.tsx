@@ -34,7 +34,6 @@ export const PlayGame = ({ tournamentId }: { tournamentId: Id<'tournaments'> }) 
       move
     })
   }
-  console.log('move', currentMatch)
 
   if (!currentMatch) return <GameOver tournamentId={tournamentId} />
 

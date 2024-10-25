@@ -12,18 +12,14 @@ export default function TournamentPage() {
   const tournament = useQuery(api.tournaments.getTournamentDetails, {
     tournamentId: tournamentId as Id<'tournaments'>
   })
-  // const matches = useQuery(api.matches.getMatchesForTournament, {
-  //   tournamentId: tournamentId as Id<'tournaments'>
-  // })
 
   if (!tournament) {
-    return <div>Loading...</div>
+    return null
   }
 
   return (
     <div className='container mx-auto p-4'>
       <h1 className='mb-4 text-2xl font-bold'>{tournament.tournament.name}</h1>
-      {/* <p className='mb-4'>Status: {tournament.status}</p> */}
       <TournamentBracket tournamentId={tournamentId as Id<'tournaments'>} />
     </div>
   )
