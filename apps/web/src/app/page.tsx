@@ -21,7 +21,7 @@ export default function LoginPage() {
     <div className='flex min-h-screen items-center justify-center bg-black p-4'>
       <div className='w-full max-w-md space-y-8 rounded-xl border border-gray-800 bg-gray-900 p-8 shadow-lg'>
         <div className='text-center'>
-          <h2 className='mt-6 text-3xl font-extrabold text-white'>Iniciar sesión</h2>
+          <h2 className='mt-6 text-3xl font-extrabold text-white'>Login</h2>
         </div>
         <form
           className='mt-8 space-y-6'
@@ -49,7 +49,7 @@ export default function LoginPage() {
           <div className='space-y-4'>
             <div>
               <Label htmlFor='email' className='text-gray-300'>
-                Correo
+                Email
               </Label>
               <Input
                 id='email'
@@ -62,7 +62,7 @@ export default function LoginPage() {
             </div>
             <div>
               <Label htmlFor='password' className='text-gray-300'>
-                Contraseña
+                Password
               </Label>
               <Input
                 id='password'
@@ -75,20 +75,19 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* {error && <p className="text-red-400 text-sm">{error}</p>} */}
-
           <Button
             type='submit'
+            disabled={submitting}
             className='w-full bg-white font-semibold text-gray-900 hover:bg-gray-200'
           >
-            Entrar
+            Enter
           </Button>
         </form>
         <div className='text-center'>
           <p className='text-sm text-gray-400'>
-            ¿No tienes una cuenta?{' '}
+            Don't have an account?{' '}
             <Link href='/signup' className='font-medium text-white hover:text-gray-200'>
-              Registrarse
+              Sign up
             </Link>
           </p>
         </div>

@@ -31,7 +31,7 @@ export default function SignupPage() {
 
       const res = signIn('password', formData)
         .then(() => {
-          router.push('/dashboard')
+          router.push('/dashboard/tournaments')
         })
         .catch((error) => {
           console.error(error)
@@ -50,13 +50,13 @@ export default function SignupPage() {
     <div className='flex min-h-screen items-center justify-center bg-black p-4'>
       <div className='w-full max-w-md space-y-8 rounded-xl border border-gray-800 bg-gray-900 p-8 shadow-lg'>
         <div className='text-center'>
-          <h2 className='mt-6 text-3xl font-extrabold text-white'>Crear cuenta</h2>
+          <h2 className='mt-6 text-3xl font-extrabold text-white'>Create account</h2>
         </div>
         <form className='mt-8 space-y-6' onSubmit={handleSubmit}>
           <div className='space-y-4'>
             <div>
               <Label htmlFor='email' className='text-gray-300'>
-                Correo
+                Email
               </Label>
               <Input
                 id='email'
@@ -71,7 +71,7 @@ export default function SignupPage() {
             </div>
             <div>
               <Label htmlFor='password' className='text-gray-300'>
-                Contraseña
+                Password
               </Label>
               <Input
                 id='password'
@@ -86,7 +86,7 @@ export default function SignupPage() {
             </div>
             <div>
               <Label htmlFor='repeat-password' className='text-gray-300'>
-                Repetir contraseña
+                Repeat password
               </Label>
               <Input
                 id='repeat-password'
@@ -107,14 +107,14 @@ export default function SignupPage() {
             type='submit'
             className='w-full bg-white font-semibold text-gray-900 hover:bg-gray-200'
           >
-            Registrarse
+            Sign up
           </Button>
         </form>
 
         <div className='flex justify-end gap-2'>
-          <p className='text-gray-500'>Ya tienes una cuenta?</p>
+          <p className='text-gray-500'>Already have an account?</p>
           <Link href='/'>
-            <span className='font-semibold text-gray-300 hover:underline'>Iniciar sesión</span>
+            <span className='font-semibold text-gray-300 hover:underline'>Sign in</span>
           </Link>
         </div>
       </div>

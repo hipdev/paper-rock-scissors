@@ -6,6 +6,7 @@ import { api } from '@packages/backend/convex/_generated/api'
 import { Id } from '@packages/backend/convex/_generated/dataModel'
 import { useParams } from 'next/navigation'
 import { PlayGame } from './_components/play-game'
+import { TournamentWinner } from './_components/tournament-winner'
 
 const TournamentStatus = {
   open: 'Abierto',
@@ -16,7 +17,6 @@ const TournamentStatus = {
 export default function TournamentPage() {
   const { tournamentId } = useParams() as { tournamentId: Id<'tournaments'> }
   const { isAuthenticated } = useConvexAuth()
-  const tournamentWinner = useQuery(api.tournaments.getTournamentWinner, { tournamentId })
 
   const tournament = useQuery(api.tournaments.getTournament, { tournamentId })
 
@@ -37,17 +37,7 @@ export default function TournamentPage() {
 
       {tournament.status === 'in_progress' && <PlayGame tournamentId={tournamentId} />}
 
-      {tournament.status === 'completed' && (
-        <>
-          <p className='mt-4 font-semibold'>The tournament has ended.</p>
-          {tournamentWinner && (
-            <p className='mt-10 text-4xl font-semibold'>
-              The winner of the tournament is {tournamentWinner.winnerName} <br /> ID:{' '}
-              {tournamentWinner.winnerId}!
-            </p>
-          )}
-        </>
-      )}
+      {tournament.status === 'completed' && <TournamentWinner tournamentId={tournamentId} />}
     </div>
   )
 }

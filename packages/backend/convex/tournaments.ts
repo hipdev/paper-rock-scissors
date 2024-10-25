@@ -127,9 +127,9 @@ export const startTournament = mutation({
       throw new Error('The number of participants does not match the required number')
     }
 
-    // Los participantes deben ser pares
-    if (participants.length % 2 !== 0) {
-      throw new ConvexError('The number of participants must be even')
+    // El total de participantes debe ser en base 2 (2, 4, 8, 16, etc.)
+    if (!Number.isInteger(Math.log2(participants.length))) {
+      throw new ConvexError('The number of participants must be a power of 2')
     }
 
     // Ordenar participantes por seed
@@ -234,12 +234,32 @@ export const getTournamentDetails = query({
       .withIndex('by_tournament_and_round', (q) => q.eq('tournamentId', tournamentId))
       .collect()
 
+    // Obtener los nombres de los jugadores
+    const playerIds = new Set(matches.flatMap((m) => [m.player1Id, m.player2Id]))
+    const players = await Promise.all(Array.from(playerIds).map((id) => ctx.db.get(id)))
+    const playerMap = Object.fromEntries(players.map((player) => [player?._id, player?.name]))
+
+    // Organizar los partidos por ronda
+    const roundMatches = matches.reduce(
+      (acc, match) => {
+        if (!acc[match.round]) acc[match.round] = []
+        acc[match.round].push({
+          ...match,
+          player1Name: playerMap[match.player1Id],
+          player2Name: playerMap[match.player2Id],
+          winnerName: match.winnerId ? playerMap[match.winnerId] : null
+        })
+        return acc
+      },
+      {} as Record<number, any[]>
+    )
+
     let winner = null
     if (tournament.status === 'completed' && tournament.winnerId) {
       winner = await ctx.db.get(tournament.winnerId)
     }
 
-    return { tournament, participants, matches, winner }
+    return { tournament, participants, roundMatches, winner }
   }
 })
 
@@ -291,6 +311,7 @@ export const getCurrentMatch = query({
           ? currentMatch.currentTurn === 'player1'
           : currentMatch.currentTurn === 'player2',
       lastGameResult: lastGame?.result, // Incluimos el resultado del último juego
+      lastGameWinnerName: lastGame?.result === 'player1' ? player1?.name : player2?.name,
       lastGameMoves: {
         player1Move: lastGame?.player1Move,
         player2Move: lastGame?.player2Move

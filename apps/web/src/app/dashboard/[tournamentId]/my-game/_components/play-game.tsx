@@ -37,52 +37,54 @@ export const PlayGame = ({ tournamentId }: { tournamentId: Id<'tournaments'> }) 
       <h2
         className={cn('mb-2 mt-4 text-xl font-semibold', currentMatch.isFinal && 'text-green-500')}
       >
-        {currentMatch.isFinal ? 'Gran Final' : 'Partida actual'}
+        {currentMatch.isFinal ? 'Big final' : 'Current match'}
       </h2>
 
-      {!currentMatch.isFinal && <p>Ronda: {currentMatch.round} </p>}
+      {!currentMatch.isFinal && <p>Round: {currentMatch.round} </p>}
 
       <p>
-        Puntajes: {currentMatch.player1Name}: {currentMatch.player1Score} -{' '}
-        {currentMatch.player2Name}: {currentMatch.player2Score}
+        Scores: {currentMatch.player1Name}: {currentMatch.player1Score} - {currentMatch.player2Name}
+        : {currentMatch.player2Score}
       </p>
 
       {currentMatch && (
         <div>
-          {currentMatch.lastGameResult === 'tie' && <p>El último juego fue un empate</p>}
+          {currentMatch.lastGameResult === 'tie' && <p>The last game was a tie</p>}
           {currentMatch.lastGameResult !== 'tie' && (
-            <p>El ganador del último juego fue {currentMatch.lastGameResult}</p>
+            <p>The winner of the last game was {currentMatch.lastGameWinnerName}</p>
           )}
 
-          {currentMatch.isYourTurn ? (
+          {currentMatch.isYourTurn && currentMatch.status !== 'completed' ? (
             <div className='mt-5'>
-              <p>Es tu turno! Elige tu jugada:</p>
+              <p>It's your turn! Choose your move:</p>
               <div className='mt-5 flex gap-12'>
                 <button
                   className='flex gap-2 rounded-md border border-white/60 px-4 py-2 transition-colors hover:border-white'
                   onClick={() => handleMove('rock')}
                 >
                   <BicepsFlexed className='h-5 w-5' />
-                  Piedra
+                  Rock
                 </button>
                 <button
                   className='flex gap-2 rounded-md border border-white/60 px-4 py-2 transition-colors hover:border-white'
                   onClick={() => handleMove('paper')}
                 >
                   <Origami className='h-5 w-5' />
-                  Papel
+                  Paper
                 </button>
                 <button
                   className='flex gap-2 rounded-md border border-white/60 px-4 py-2 transition-colors hover:border-white'
                   onClick={() => handleMove('scissors')}
                 >
                   <Scissors className='h-5 w-5' />
-                  Tijeras
+                  Scissors
                 </button>
               </div>
             </div>
+          ) : !currentMatch.isYourTurn && currentMatch.status !== 'completed' ? (
+            <p className='mt-4'>Waiting for your opponent...</p>
           ) : (
-            <p className='mt-4'>Esperando a tu oponente...</p>
+            <p className='mt-4'>Waiting for current brackets to finish...</p>
           )}
         </div>
       )}
@@ -90,7 +92,7 @@ export const PlayGame = ({ tournamentId }: { tournamentId: Id<'tournaments'> }) 
       {currentMatch.status === 'pending' && userMove && (
         <div className='mt-4'>
           <p>
-            Jugaste <span className='font-semibold text-green-500'>{playValue[userMove]}</span>{' '}
+            You played <span className='font-semibold text-green-500'>{playValue[userMove]}</span>{' '}
           </p>
         </div>
       )}
