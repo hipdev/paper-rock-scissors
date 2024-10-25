@@ -436,6 +436,8 @@ export const getLostMatch = query({
       .withIndex('by_match', (q) => q.eq('matchId', lostMatch?._id as Id<'matches'>))
       .first()
 
+    if (!lostMatch || !lostGame) return null
+
     const winnerIdData = await ctx.db.get(lostMatch?.winnerId as Id<'users'>)
 
     return {

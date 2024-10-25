@@ -34,7 +34,7 @@ export default function LoginPage() {
 
             signIn('password', formData)
               .then(() => {
-                router.push('/dashboard')
+                router.push('/dashboard/users')
               })
               .catch((error) => {
                 console.error(error)
