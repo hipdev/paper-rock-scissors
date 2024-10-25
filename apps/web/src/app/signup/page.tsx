@@ -29,7 +29,7 @@ export default function SignupPage() {
 
       const res = signIn('password', formData)
         .then(() => {
-          router.push('/dashboard/players')
+          router.push('/dashboard/users')
         })
         .catch((error) => {
           console.error(error)

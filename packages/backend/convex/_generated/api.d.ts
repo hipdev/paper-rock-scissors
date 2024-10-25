@@ -17,7 +17,6 @@ import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as http from "../http.js";
 import type * as lib_utils from "../lib/utils.js";
-import type * as notifications from "../notifications.js";
 import type * as tournaments from "../tournaments.js";
 import type * as users from "../users.js";
 
@@ -34,7 +33,6 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   http: typeof http;
   "lib/utils": typeof lib_utils;
-  notifications: typeof notifications;
   tournaments: typeof tournaments;
   users: typeof users;
 }>;

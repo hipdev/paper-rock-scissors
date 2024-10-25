@@ -15,6 +15,8 @@ export default function AsideNav() {
   const user = useQuery(api.users.currentUser)
   const updateUserName = useMutation(api.users.updateUserName)
 
+  if (!user) return <nav></nav>
+
   const iconClassName = cn(
     'h-auto w-5 text-sm',
     isCollapsed ? 'text-neutral-500' : 'text-gray-500/80'
@@ -32,13 +34,13 @@ export default function AsideNav() {
       <CustomLink
         href={`/dashboard/users`}
         IconComponent={<Users size={20} className={iconClassName} />}
-        label='Players'
+        label='Users'
         isCollapsed={isCollapsed}
       />
       {user?.name && (
         <CustomLink
           href='/dashboard/tournaments'
-          IconComponent={<Users size={20} className={iconClassName} />}
+          IconComponent={<Trophy size={20} className={iconClassName} />}
           label='Tournaments'
           isCollapsed={isCollapsed}
         />

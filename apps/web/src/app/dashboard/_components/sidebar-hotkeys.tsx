@@ -6,10 +6,21 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 
 import { useSidebarStore } from './sidebar-store'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useHotkeys } from 'react-hotkeys-hook'
 
 export default function SidebarHotkeys() {
   const isCollapsed = useSidebarStore((state) => state.isCollapsed)
+  const setIsCollapsed = useSidebarStore((state) => state.setIsCollapsed)
+
   const [openModal, setOpenModal] = useState(false)
+
+  const { push } = useRouter()
+  console.log('push', push)
+
+  useHotkeys('shift+m', () => setIsCollapsed())
+  useHotkeys('shift+1', () => push('/dashboard/users'))
+  useHotkeys('shift+2', () => push('/dashboard/tournaments'))
 
   return (
     <>
@@ -34,7 +45,7 @@ export default function SidebarHotkeys() {
             <ul className='mt-2 grid grid-cols-2 items-start justify-start gap-3 rounded'>
               <li className='flex items-center gap-2 rounded-md bg-white/10 px-2.5 py-2 shadow'>
                 <span className='bg-primary-foreground flex items-center gap-1 rounded-sm px-2 py-0 text-xs font-semibold text-black'>
-                  Ctrl <Plus className='w-3.5' /> M
+                  Shift <Plus className='w-3.5' /> M
                 </span>
                 Hide/Show menu
               </li>
@@ -49,13 +60,6 @@ export default function SidebarHotkeys() {
                   Shift <Plus className='w-3.5' /> 2
                 </span>
                 Tournaments
-              </li>
-
-              <li className='flex items-center gap-2 rounded-md bg-white/10 px-2.5 py-2 shadow'>
-                <span className='bg-primary-foreground flex items-center gap-1 rounded-sm px-2 py-0 text-xs font-semibold text-black'>
-                  Shift <Plus className='w-3.5' /> 5
-                </span>
-                My profile
               </li>
             </ul>
           </div>
