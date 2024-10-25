@@ -393,28 +393,17 @@ export const playGame = mutation({
       if (gameWinner !== 'tie') {
         const updatedMatch = await updateMatchScore(ctx, match, gameWinner)
 
-        // Determinar si el partido ha terminado
-        const isBestOfTwo = match.isFinal || tournament.gameType === 'best_of_two'
-        const isMatchCompleted = isBestOfTwo
-          ? updatedMatch?.player1Score === 2 ||
-            updatedMatch?.player2Score === 2 ||
-            (updatedMatch?.player1Score === 1 &&
-              updatedMatch?.player2Score === 1 &&
-              updatedMatch?.currentGameNumber === 2)
-          : Math.max(updatedMatch?.player1Score || 0, updatedMatch?.player2Score || 0) === 1
-
-        if (isMatchCompleted) {
-          await ctx.db.patch(matchId, { status: 'completed' })
-          await handleMatchCompletion(ctx, updatedMatch as Doc<'matches'>)
-        } else {
-          // Cambiar el turno solo si el partido no ha terminado
-          const nextTurn = match.currentTurn === 'player1' ? 'player2' : 'player1'
-          await ctx.db.patch(matchId, { currentTurn: nextTurn })
+        if (updatedMatch && updatedMatch.status === 'completed') {
+          await handleMatchCompletion(ctx, updatedMatch)
         }
-      } else {
-        // En caso de empate, mantener el mismo turno
-        await ctx.db.patch(matchId, { currentTurn: match.currentTurn })
       }
+
+      // Cambiar el turno y actualizar el número de juego
+      const nextTurn = match.currentTurn === 'player1' ? 'player2' : 'player1'
+      await ctx.db.patch(matchId, {
+        currentTurn: nextTurn,
+        currentGameNumber: (match.currentGameNumber || 0) + 1
+      })
 
       return gameWinner
     } else {

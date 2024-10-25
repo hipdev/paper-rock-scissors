@@ -2,14 +2,14 @@ import { api } from '@packages/backend/convex/_generated/api'
 import { Id } from '@packages/backend/convex/_generated/dataModel'
 import { useMutation, useQuery } from 'convex/react'
 import { BicepsFlexed, Origami, Scissors } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { GameOver } from './game-over'
 import { cn } from '@/lib/utils'
 
 export const playValue = {
-  rock: 'piedra',
-  paper: 'papel',
-  scissors: 'tijeras'
+  rock: 'rock',
+  paper: 'paper',
+  scissors: 'scissors'
 }
 
 export const PlayGame = ({ tournamentId }: { tournamentId: Id<'tournaments'> }) => {
@@ -17,6 +17,12 @@ export const PlayGame = ({ tournamentId }: { tournamentId: Id<'tournaments'> }) 
 
   const currentMatch = useQuery(api.tournaments.getCurrentMatch, { tournamentId })
   const playGame = useMutation(api.tournaments.playGame)
+
+  useEffect(() => {
+    if (currentMatch?.status === 'completed') {
+      setUserMove(null)
+    }
+  }, [currentMatch?._id])
 
   const handleMove = async (move: 'rock' | 'paper' | 'scissors') => {
     if (!currentMatch) return
@@ -49,7 +55,9 @@ export const PlayGame = ({ tournamentId }: { tournamentId: Id<'tournaments'> }) 
 
       {currentMatch && (
         <div>
-          {currentMatch.lastGameResult === 'tie' && <p>The last game was a tie</p>}
+          {currentMatch.lastGameResult === 'tie' && (
+            <p className='mt-4 text-lg text-yellow-500'>The last game was a tie</p>
+          )}
           {currentMatch.lastGameResult !== 'tie' && (
             <p>The winner of the last game was {currentMatch.lastGameWinnerName}</p>
           )}

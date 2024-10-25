@@ -13,19 +13,25 @@ export const GameOver = ({ tournamentId }: { tournamentId: Id<'tournaments'> }) 
 
   return (
     <div>
-      <h3 className='text-2xl font-semibold text-red-500'>Rayos!</h3>
+      <h3 className='text-2xl font-semibold text-red-500'>Ouch!</h3>
       <p className='mt-4 text-lg'>
-        <strong>{lostMatch?.winnerIdData?.name}</strong> ha ganado el juego, jugaste{' '}
-        <strong>{playValue[lostMatch?.player1Move as keyof typeof playValue]}</strong> contra{' '}
-        <strong>{playValue[lostMatch?.player2Move as keyof typeof playValue]}</strong>.
+        <strong>{lostMatch?.winnerIdData?.name}</strong> has won the game, you played{' '}
+        <strong className='text-green-500'>
+          {playValue[lostMatch?.player1Move as keyof typeof playValue]}
+        </strong>{' '}
+        against{' '}
+        <strong className='text-red-500'>
+          {playValue[lostMatch?.player2Move as keyof typeof playValue]}
+        </strong>
+        .
       </p>
 
       <div className='mt-4'>
-        Puedes seguir el{' '}
+        You can follow the{' '}
         <Link href={`/dashboard/${tournamentId}/ranking`} className='text-blue-500'>
           ranking
         </Link>{' '}
-        para este torneo.
+        for this tournament.
       </div>
     </div>
   )
