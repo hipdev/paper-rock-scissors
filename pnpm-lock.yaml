@@ -25,7 +25,7 @@ importers:
         version: 0.37.2
       '@convex-dev/auth':
         specifier: ^0.0.73
-        version: 0.0.73(@auth/core@0.37.2)(convex@1.16.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(next@14.2.15(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
+        version: 0.0.73(@auth/core@0.37.2)(convex@1.16.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
       '@expo/vector-icons':
         specifier: ^14.0.4
         version: 14.0.4
@@ -154,8 +154,8 @@ importers:
         specifier: ^0.37.2
         version: 0.37.2
       '@convex-dev/auth':
-        specifier: ^0.0.73
-        version: 0.0.73(@auth/core@0.37.2)(convex@1.16.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(next@14.2.15(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
+        specifier: ^0.0.74
+        version: 0.0.74(@auth/core@0.37.2)(convex@1.17.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(next@14.2.15(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
       '@packages/backend':
         specifier: workspace:*
         version: link:../../packages/backend
@@ -205,11 +205,11 @@ importers:
         specifier: 1.0.0
         version: 1.0.0(@types/react-dom@18.3.0)(@types/react@18.3.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       convex:
-        specifier: ^1.16.6
-        version: 1.16.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^1.17.0
+        version: 1.17.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       convex-helpers:
-        specifier: ^0.1.61
-        version: 0.1.61(convex@1.16.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(zod@3.23.8)
+        specifier: ^0.1.62
+        version: 0.1.62(convex@1.17.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(zod@3.23.8)
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -281,8 +281,8 @@ importers:
   packages/backend:
     dependencies:
       '@convex-dev/auth':
-        specifier: ^0.0.73
-        version: 0.0.73(@auth/core@0.37.2)(convex@1.17.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
+        specifier: ^0.0.74
+        version: 0.0.74(@auth/core@0.37.2)(convex@1.17.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(next@14.2.15(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
       convex:
         specifier: ^1.17.0
         version: 1.17.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1142,6 +1142,20 @@ packages:
 
   '@convex-dev/auth@0.0.73':
     resolution: {integrity: sha512-Cy1dmU8xkzwWBrL472zs5gW5fWyeesGS2zzZF6+nv0v4YLin7//WCC2aYt7w7BHqLYDC36qjtdLfZEdE26wW5w==}
+    hasBin: true
+    peerDependencies:
+      '@auth/core': ^0.36.0
+      convex: ^1.14.4
+      next: '*'
+      react: ^18.2.0
+    peerDependenciesMeta:
+      next:
+        optional: true
+      react:
+        optional: true
+
+  '@convex-dev/auth@0.0.74':
+    resolution: {integrity: sha512-RT28LgX1rU0mIYnIhcQzjYSFLSlR+H5PTRQzGs3c9psD0vPGXOvMFcPefGj+UMnxEdKgAYzVKJWzBwLHWfzXlg==}
     hasBin: true
     peerDependencies:
       '@auth/core': ^0.36.0
@@ -3295,6 +3309,22 @@ packages:
 
   convex-helpers@0.1.61:
     resolution: {integrity: sha512-cYKCtIKCvB92W9W05u82rbgFqEoEKi1VGUvrkqgkCCrTTeEo8aWaZQED315dsTx66AmhtgiV8Xj92bXjqw9yBg==}
+    hasBin: true
+    peerDependencies:
+      convex: ^1.13.0
+      hono: ^4.0.5
+      react: ^17.0.2 || ^18.0.0
+      zod: ^3.22.4
+    peerDependenciesMeta:
+      hono:
+        optional: true
+      react:
+        optional: true
+      zod:
+        optional: true
+
+  convex-helpers@0.1.62:
+    resolution: {integrity: sha512-dSHI5ETqUUjIWPVavMkegqJh31tC14QdgEB9COkVptKndnlF1sgr2rgQQDpUOAAEaWMkoFanXl+GlAwy6z2fsg==}
     hasBin: true
     peerDependencies:
       convex: ^1.13.0
@@ -7986,7 +8016,7 @@ snapshots:
 
   '@bcoe/v8-coverage@0.2.3': {}
 
-  '@convex-dev/auth@0.0.73(@auth/core@0.37.2)(convex@1.16.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(next@14.2.15(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)':
+  '@convex-dev/auth@0.0.73(@auth/core@0.37.2)(convex@1.16.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@auth/core': 0.37.2
       arctic: 1.9.2
@@ -7998,10 +8028,9 @@ snapshots:
       path-to-regexp: 7.1.0
       server-only: 0.0.1
     optionalDependencies:
-      next: 14.2.15(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
 
-  '@convex-dev/auth@0.0.73(@auth/core@0.37.2)(convex@1.17.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)':
+  '@convex-dev/auth@0.0.74(@auth/core@0.37.2)(convex@1.17.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(next@14.2.15(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@auth/core': 0.37.2
       arctic: 1.9.2
@@ -8013,6 +8042,7 @@ snapshots:
       path-to-regexp: 7.1.0
       server-only: 0.0.1
     optionalDependencies:
+      next: 14.2.15(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
 
   '@egjs/hammerjs@2.0.17':
@@ -10767,6 +10797,13 @@ snapshots:
   convex-helpers@0.1.61(convex@1.16.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(zod@3.23.8):
     dependencies:
       convex: 1.16.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+    optionalDependencies:
+      react: 18.3.1
+      zod: 3.23.8
+
+  convex-helpers@0.1.62(convex@1.17.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(zod@3.23.8):
+    dependencies:
+      convex: 1.17.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     optionalDependencies:
       react: 18.3.1
       zod: 3.23.8
