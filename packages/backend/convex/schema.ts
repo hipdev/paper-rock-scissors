@@ -45,7 +45,8 @@ const schema = defineSchema({
     score: v.number(),
     eliminated: v.boolean(),
     joinedAt: v.number(),
-    seed: v.number()
+    seed: v.number(),
+    gender: v.optional(v.union(v.literal('male'), v.literal('female')))
   })
     .index('by_tournament', ['tournamentId'])
     .index('by_user', ['userId'])
